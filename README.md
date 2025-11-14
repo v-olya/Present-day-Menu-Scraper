@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿**Playwright Installation**
 
-## Getting Started
+- **What runs on `npm install`:** this repo runs the helper `scripts/install-playwright.mjs` as a `postinstall` script which downloads Playwright browser binaries (Chromium by default).
+- **Skip download:** set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` to skip browser downloads during `npm install` (only do this if browsers are provided by your image, cache, or provisioning process).
+- **Install specific browsers:** set `PLAYWRIGHT_BROWSERS='chromium,firefox'` before running `npm run playwright:install` to install only the listed browsers.
+- **Linux system deps:** on Linux the helper attempts `--with-deps` only when running as root; otherwise it installs binaries only and prints guidance to run `sudo npx playwright install --with-deps` if needed.
 
-First, run the development server:
+CI / Docker notes:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- For CI prefer using Playwright's official Docker images which include deps, or run `sudo npx playwright install --with-deps`.
+- To speed up installs, set a shared `PLAYWRIGHT_BROWSERS_PATH` and cache that directory in CI.
+
+Caching `PLAYWRIGHT_BROWSERS_PATH`:
+
+- Playwright stores browser binaries in the per-user cache by default (`%LOCALAPPDATA%\ms-playwright` on Windows or `$HOME/.cache/ms-playwright` on Linux). You can set `PLAYWRIGHT_BROWSERS_PATH` to a path you cache between CI runs to avoid repeated downloads.
+
+Example (GitHub Actions cache step):
+
+```yaml
+- name: Cache Playwright browsers
+  uses: actions/cache@v4
+  with:
+    path: ~/.cache/ms-playwright
+    key: playwright-browsers-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If you want, you can change this project to remove the helper and use a direct installation instead.

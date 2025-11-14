@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "playwright:install": "node ./scripts/install-playwright.mjs",
+    "postinstall": "npm run playwright:install"
   },
   "dependencies": {
     "next": "16.0.3",
