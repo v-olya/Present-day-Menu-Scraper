@@ -1,5 +1,5 @@
 export enum ERROR_MESSAGES {
-  INVALID_URL = "Uvedená URL adresa je neplatná.",
+  UNREACHABLE_URL = "Uvedená URL adresa není platná.",
   DATE_MISMATCH = "Datum neodpovídá dnešnímu dni",
   NO_MENU_ITEMS = "Žádné položky menu",
 }
