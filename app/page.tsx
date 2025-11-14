@@ -77,21 +77,39 @@ export default function Home() {
   );
 
   const [url, setUrl] = useState<string>("");
+  const [responseString, setResponseString] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (error) return;
+    setError(null);
+    setIsLoading(true);
 
     try {
-      // shouldn't try new URL(url), becaause it's handled by input type="url"
-      const res = await fetch(url, { method: "GET" });
+      const res = await fetch("/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
       if (!res.ok) {
-        setError(ERROR_MESSAGES.INVALID_URL);
+        let msg = ERROR_MESSAGES.UNREACHABLE_URL;
+        try {
+          const j = await res.json();
+          msg = j?.error || msg;
+        } catch {}
+        setError(msg);
+        setIsLoading(false);
         return;
       }
+
+      const parsed = await res.json();
+      setResponseString(JSON.stringify(parsed));
       setError(null);
+      setIsLoading(false);
     } catch {
-      setError(ERROR_MESSAGES.INVALID_URL);
+      setError(ERROR_MESSAGES.UNREACHABLE_URL);
+      setIsLoading(false);
     }
   };
 
@@ -130,7 +148,7 @@ export default function Home() {
       : `data:image/png;base64,${data.image_base64}`
     : "/favicon.png";
 
-  const hasImage = !!data.image_base64?.length; // needed to apply blur effect only when image is present
+  const hasImage = !!data.image_base64?.length; // needed to apply blur effect only IF image is present
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
@@ -148,11 +166,27 @@ export default function Home() {
           className="flex-1 p-2"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
+          required
         />
         <button type="submit" className="px-4 py-2">
           Odeslat
         </button>
       </form>
+
+      {isLoading && (
+        <div className="mt-6 text-center">
+          <p className="text-lg">Loading...</p>
+        </div>
+      )}
+
+      {responseString && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold mb-2">Response:</h2>
+          <div className="bg-gray-100 p-4 rounded overflow-x-auto whitespace-pre-wrap">
+            {responseString}
+          </div>
+        </div>
+      )}
 
       <div className="results">
         <div className="w-full flex justify-center mb-6">
