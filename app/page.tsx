@@ -20,7 +20,7 @@ export default function Home() {
         category: "polévka",
         name: "Hovězí vývar",
         price: 65,
-        allergens: ["1", "3", "9"],
+        allergens: ["9"],
       },
       {
         category: "hlavní jídlo",
@@ -33,14 +33,14 @@ export default function Home() {
         category: "dezert",
         name: "Panna cotta",
         price: 145,
-        allergens: ["7"],
+        allergens: ["3", "7"],
         weight: "",
       },
       {
         category: "polévka",
         name: "Zeleninový vývar s nudlemi",
         price: 40,
-        allergens: [],
+        allergens: ["1", "9"],
         weight: "175g",
       },
     ],
@@ -79,6 +79,7 @@ export default function Home() {
   const [url, setUrl] = useState<string>("");
   const [responseString, setResponseString] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -113,7 +114,15 @@ export default function Home() {
     }
   };
 
-  const menuContent = Object.entries(groupDishes(data.menu_items)).map(
+  const allAllergens = Array.from(
+    new Set(data.menu_items.flatMap((item) => item.allergens || []))
+  ).sort();
+  const filteredItems = data.menu_items.filter(
+    (item) =>
+      !selectedAllergens.some((allergen) => item.allergens?.includes(allergen))
+  );
+
+  const menuContent = Object.entries(groupDishes(filteredItems)).map(
     ([category, items]) => (
       <div key={category} className="mb-6">
         <h3 className="text-xl mb-2 capitalize font-bold">{category}</h3>
@@ -229,6 +238,40 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {allAllergens.length > 0 && (
+          <div className="mb-6 text-sm">
+            <div className="flex flex-wrap justify-center items-baseline gap-x-6 gap-y-2 mb-2">
+              <span>Odfiltruj alergeny:</span>
+              {allAllergens.map((code) => (
+                <label key={code} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedAllergens.includes(code)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAllergens([...selectedAllergens, code]);
+                      } else {
+                        setSelectedAllergens(
+                          selectedAllergens.filter((a) => a !== code)
+                        );
+                      }
+                    }}
+                    className="mr-2"
+                  />
+                  {getAllergenDescriptions([code])[0]}
+                </label>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSelectedAllergens([])}
+                className="py-1 px-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        )}
 
         {error ? <ErrorMessage message={error} /> : menuContent}
       </div>
