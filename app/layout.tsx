@@ -28,8 +28,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="app-shell">
-          <main className="menu-container">
-            <div className="menu-surface">{children}</div>
+          <main className="container">
+            <div className="surface">{children}</div>
           </main>
         </div>
       </body>
