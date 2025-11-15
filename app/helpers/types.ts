@@ -19,3 +19,9 @@ export interface RestaurantMenu {
   image_base64?: string;
   // for cases when the scraper will return an imagee too (the largest one in the content section)
 }
+
+export type ParseResult = {
+  text: string;
+  image_base64: string | null;
+  image_url: string | null;
+};
