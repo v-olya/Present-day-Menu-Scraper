@@ -2,6 +2,7 @@ import { ERROR_MESSAGES } from "../helpers/const";
 import { getMainSection } from "../helpers/scraper";
 import { extractMenuFromHTML } from "../helpers/llm";
 import { DetectedMenu } from "../helpers/types";
+import { AiError } from "../helpers/errors";
 
 export async function POST(req: Request) {
   try {
@@ -66,6 +67,23 @@ export async function POST(req: Request) {
       menu = parsed ? JSON.parse(parsed) : null;
     } catch (e) {
       console.error("LLM output parsing error:", e);
+      if (e instanceof AiError) {
+        const payload = e.payload as { parsed?: unknown } | undefined;
+        console.error("AI error:", { code: e.code, details: payload ?? {} });
+        const errMsg =
+          ERROR_MESSAGES[`AI_${e.code}`] ??
+          ERROR_MESSAGES.FAILED_PROCESS_MENU_AI;
+        const parsedValue = payload?.parsed ?? parsed ?? null;
+        return new Response(
+          JSON.stringify({
+            error: errMsg,
+            parsed: parsedValue,
+            menu: null,
+            scraped,
+          }),
+          { status: 502, headers: { "content-type": "application/json" } }
+        );
+      }
       return new Response(
         JSON.stringify({
           error: ERROR_MESSAGES.FAILED_PROCESS_MENU_AI,

@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import Ajv from "ajv";
 import { getSystemPrompt } from "./const";
+import { AiError } from "./errors";
 import { withTimeout } from "./functions";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -101,5 +103,21 @@ export async function extractMenuFromHTML(
   const content = res.choices[0]?.message?.content;
   if (!content) return null;
 
-  return content;
+  // Validate the returned content against the same JSON Schema using Ajv
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch (e) {
+    throw new AiError("RESPONSE_NOT_JSON", {
+      originalMessage: String(e instanceof Error ? e.message : e),
+    });
+  }
+  const ajv = new Ajv({ allErrors: true });
+  const validate = ajv.compile(detectedMenuSchema as Record<string, unknown>);
+  const valid = validate(parsed);
+  if (!valid) {
+    const payload = { validationErrors: validate.errors, parsed };
+    throw new AiError("SCHEMA_VALIDATION_FAILED", payload);
+  }
+  return JSON.stringify(parsed);
 }

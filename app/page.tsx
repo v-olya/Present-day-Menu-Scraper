@@ -61,29 +61,20 @@ export default function Home() {
         body: JSON.stringify({ url }),
       });
 
-      if (!res.ok) {
-        let msg = ERROR_MESSAGES.UNREACHABLE_URL;
-        try {
-          const j = await res.json();
-          msg = j?.error || msg;
-        } catch {}
-        setError(msg);
-        setIsLoading(false);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || ERROR_MESSAGES.UNREACHABLE_URL);
+        setFetchedData(null);
         return;
       }
 
-      const parsed = await res.json();
-      if (parsed.error) {
-        setError(parsed.error);
-        setFetchedData(null);
-        setIsLoading(false);
-        return;
-      }
-      setFetchedData(parsed);
+      setFetchedData(data);
       setError(null);
-      setIsLoading(false);
-    } catch {
+    } catch (error) {
+      console.error("Fetch error:", error);
       setError(ERROR_MESSAGES.UNREACHABLE_URL);
+    } finally {
       setIsLoading(false);
     }
   };
