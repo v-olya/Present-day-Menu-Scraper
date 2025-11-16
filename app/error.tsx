@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import Link from "next/link";
+import { ERROR_MESSAGES } from "./helpers/const";
 
 type Props = {
   error: Error;
@@ -16,10 +17,8 @@ export default function GlobalError({ error, reset }: Props) {
     <div className="app-shell">
       <div className="container">
         <div className="surface text-center">
-          <h1>{error?.message ?? "Unknown error"}</h1>
-          <p className="my-8 muted">
-            An unexpected error occurred. Try again, go back, or go home.
-          </p>
+          <h1>{error?.message ?? ERROR_MESSAGES.UNKNOWN_ERROR}</h1>
+          <p className="my-8 muted">{ERROR_MESSAGES.UNEXPECTED_ERROR}</p>
           <div>
             <Link href="/" className="py-1.5 px-3 btn btn-accent font-medium">
               Home

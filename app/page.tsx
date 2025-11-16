@@ -2,7 +2,11 @@
 
 import { useState, FormEvent } from "react";
 import Image from "next/image";
-import { type MenuItem, type RestaurantMenu } from "./helpers/types";
+import {
+  type MenuItem,
+  type RestaurantMenu,
+  type DetectedMenu,
+} from "./helpers/types";
 import ErrorMessage from "./components/ErrorMessage";
 import RawDetails from "./components/RawDetails";
 import { getAllergenDescriptions } from "./helpers/allergens";
@@ -15,8 +19,7 @@ export default function Home() {
   const data: RestaurantMenu = {
     restaurant_name: "Restaurace Example",
     source_url: "http://example.com/menu",
-    daily_menu: true,
-    date: "2025-11-15",
+    date: "2025-11-16",
     menu_items: [
       {
         category: "polévka",
@@ -61,7 +64,7 @@ export default function Home() {
       dateGiven.getMonth() === now.getMonth() &&
       dateGiven.getDate() === now.getDate();
     return !dateIsToday
-      ? ERROR_MESSAGES.DATE_MISMATCH
+      ? ERROR_MESSAGES.CACHED_DATE_MISMATCH
       : !data.menu_items?.length
       ? ERROR_MESSAGES.NO_MENU_ITEMS
       : null;
@@ -69,7 +72,7 @@ export default function Home() {
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [fetchedData, setFetchedData] = useState<{
     parsed?: string | null;
-    menu: RestaurantMenu | null;
+    menu: DetectedMenu | null;
     scraped?: { text: string; image_url?: string; image_base64?: string };
   } | null>(null);
 
@@ -248,28 +251,44 @@ export default function Home() {
     </div>
   );
 
-  // Show the raw LLM output (now `parsed_raw`) if it exists. Try to pretty-print JSON.
-  const rawParsedJSX = fetchedData?.parsed
-    ? (() => {
-        let content = fetchedData.parsed as string;
-        try {
-          const parsedJson = JSON.parse(content);
-          content = JSON.stringify(parsedJson, null, 2);
-        } catch {
-          // leave as plaintext if not JSON
-        }
-        return <RawDetails title="Parsed" content={content} />;
-      })()
-    : null;
-
-  // Show raw scraped page text when available (separate from LLM output).
+  // Show raw scraped page text
   const rawScrapedJSX = fetchedData?.scraped?.text ? (
-    <RawDetails title="Raw Scraped Text" content={fetchedData.scraped.text} />
+    <RawDetails title="Playwright output" content={fetchedData.scraped.text} />
   ) : null;
+
+  // Parse and pretty-print the raw LLM output
+  let rawParsed: string | null = null;
+  let prettyParsed: string | null = null;
+  let parsedJson: Record<string, unknown> | null = null;
+  if (fetchedData?.parsed) {
+    rawParsed = fetchedData.parsed as string;
+    try {
+      // Exclude the rationale from the LLM output
+      parsedJson = JSON.parse(rawParsed) as Record<string, unknown>;
+      const withoutRationale = { ...parsedJson };
+      delete (withoutRationale as Record<string, unknown>).rationale;
+      prettyParsed = JSON.stringify(withoutRationale, null, 2);
+    } catch {
+      prettyParsed = rawParsed;
+    }
+  }
+  const rawParsedJSX = prettyParsed ? (
+    <RawDetails title="LLM output" content={prettyParsed} />
+  ) : null;
+
+  // Render the model rationale as a numbered list
+  let rawRationaleJSX = null;
+  const rationale = parsedJson?.rationale;
+  if (Array.isArray(rationale) && rationale.length) {
+    const numbered = rationale
+      .map((step: unknown, idx: number) => `${idx + 1}. ${String(step)}`)
+      .join("\n");
+    rawRationaleJSX = <RawDetails title="Model rationale" content={numbered} />;
+  }
 
   return (
     <div className="contentful mx-auto p-6">
-      <h1 className="text-3xl my-3 font-semibold text-center">
+      <h1 className="text-3xl mt-3 mb-5 font-semibold text-center">
         Aktuální nabídka na dnešek,
       </h1>
       <h2 className={`text-3xl text-center ${handwritten.className}`}>
@@ -299,26 +318,35 @@ export default function Home() {
         <h2 className="text-2xl text-center font-semibold text-teal-800 ms-4">
           Loading...
         </h2>
-      ) : fetchedData ? (
-        <div className="results">
-          {imageTitleJSX}
-          {filterJSX}
-          {menuContent}
-          {rawParsedJSX}
-          {rawScrapedJSX}
-        </div>
-      ) : url ? (
-        error ? (
-          <div className="results">
-            <ErrorMessage message={error} />
-          </div>
-        ) : null
       ) : (
         <div className="results">
-          {imageTitleJSX}
-          {filterJSX}
-          {error ? <ErrorMessage message={error} /> : menuContent}
-          {rawParsedJSX}
+          {fetchedData ? (
+            <>
+              {imageTitleJSX}
+              {/* The reason of failed detection */}
+              {typeof fetchedData?.menu?.reason === "string" &&
+                !fetchedData.menu.menu_items?.length && (
+                  <ErrorMessage message={fetchedData.menu.reason} />
+                )}
+              {filterJSX}
+              {menuContent}
+              {rawParsedJSX}
+              {rawRationaleJSX}
+              {rawScrapedJSX}
+            </>
+          ) : url ? (
+            error ? (
+              <ErrorMessage message={error} />
+            ) : null
+          ) : (
+            <>
+              {imageTitleJSX}
+              {filterJSX}
+              {error ? <ErrorMessage message={error} /> : menuContent}
+              {rawParsedJSX}
+              {rawRationaleJSX}
+            </>
+          )}
         </div>
       )}
     </div>
