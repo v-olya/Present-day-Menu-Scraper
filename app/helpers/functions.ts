@@ -19,3 +19,12 @@ export const formatDate = (date: string): string => {
     str.charAt(0).toUpperCase() + str.slice(1);
   return capitalize(new Date(date).toLocaleDateString("cs-CZ", options));
 };
+
+export const getDomainName = (host: string) => {
+  // non-reliable extractor: we need domain name as a fallback for the restaurant_name
+  return host
+    .replace(/^www\./, "")
+    .split(".")
+    .slice(0, -1)
+    .join(".");
+};
