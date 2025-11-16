@@ -22,12 +22,12 @@ export enum REASON {
 }
 
 export const restaurantURLs = [
-  "https://www.restauracehybernska.cz/", // tricky restaurant name detection
+  "https://www.restauracehybernska.cz/", // menu on homepage
   "https://www.peklo-ostrava.cz/denni-menu/", // non-existent
   "https://www.restauracesahara.cz/poledni-menu/", // image menu, outdated
   "https://restauraceujelenacb.cz/denni-menu/", // image menu, valid
-  "https://pikmenu.com/cs/jidelna-u-jaurisu/cs", // hidden menu, long lists
-  "https://www.500restaurant.cz/denni-menu/", // multi-day menu
+  "https://pikmenu.com/cs/jidelna-u-jaurisu/cs", // hidden menu, Ut-Pá * NB! "Manual" restaurant_name detection fails because the site is a hub
+  "https://www.500restaurant.cz/denni-menu/", // popup, Po-Pá
   "http://www.deminka.com/stale-menu/", // redirect; regular menu
 ];
 
