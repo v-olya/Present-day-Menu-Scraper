@@ -1,11 +1,11 @@
 export const ALLERGENS: Record<string, string> = {
-  "1": "Obiloviny obsahující lepek",
+  "1": "Obiloviny (lepek)",
   "2": "Korýši (např. krevety, krabi)",
   "3": "Vejce",
   "4": "Ryby",
   "5": "Arašíd (buráky)",
   "6": "Sója",
-  "7": "Mléko (včetně laktózy)",
+  "7": "Mléko (laktóza)",
   "8": "Skořápkové ořechy",
   "9": "Celer",
   "10": "Hořčice",
