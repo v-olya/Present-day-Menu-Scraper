@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
   type MenuItem,
@@ -48,17 +48,31 @@ export default function Home() {
     scraped?: { text: string; image_url?: string; image_base64?: string };
   } | null>(null);
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFetchedData(null);
     setError(null);
     setIsLoading(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const res = await fetch("/menu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
+        signal: controller.signal,
       });
 
       const data = await res.json();
@@ -76,6 +90,7 @@ export default function Home() {
       setError(ERROR_MESSAGES.UNREACHABLE_URL);
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 

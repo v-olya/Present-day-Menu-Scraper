@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     let headRes: Response;
     try {
       // Don't re-validate the URL (FE does), rely on catch
-      headRes = await fetch(url, { method: "GET" });
+      headRes = await fetch(url, { method: "GET", signal: req.signal });
     } catch (err) {
       console.error("Fetch error:", err);
       return new Response(
@@ -62,7 +62,8 @@ export async function POST(req: Request) {
       parsed = await extractMenuFromHTML(
         scraped.text,
         scraped.restaurant,
-        scraped.image_url
+        scraped.image_url,
+        req.signal
       );
       menu = parsed ? JSON.parse(parsed) : null;
     } catch (e) {

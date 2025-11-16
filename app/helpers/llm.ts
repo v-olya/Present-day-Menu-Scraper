@@ -65,7 +65,8 @@ const detectedMenuSchema = {
 export async function extractMenuFromHTML(
   htmlContent: string,
   restaurantName: string,
-  imageUrl?: string | null
+  imageUrl?: string | null,
+  signal?: AbortSignal
 ): Promise<string | null> {
   const messages: ChatCompletionMessageParam[] = [
     { role: "system", content: getSystemPrompt(restaurantName) },
@@ -84,23 +85,27 @@ export async function extractMenuFromHTML(
   }
 
   const res = await withTimeout(
-    openai.chat.completions.create({
-      model: MODEL_NAME,
-      messages,
-      temperature: 0,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "restaurant_menu",
-          schema: detectedMenuSchema,
-          strict: true,
+    openai.chat.completions.create(
+      {
+        model: MODEL_NAME,
+        messages,
+        temperature: 0,
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "restaurant_menu",
+            schema: detectedMenuSchema,
+            strict: true,
+          },
         },
       },
-    }),
-    30000
+      { signal }
+    ),
+    30000,
+    signal
   );
 
-  const content = res.choices[0]?.message?.content;
+  const content = (res as OpenAI.ChatCompletion).choices[0]?.message?.content;
   if (!content) return null;
 
   // Validate the returned content against the same JSON Schema using Ajv
