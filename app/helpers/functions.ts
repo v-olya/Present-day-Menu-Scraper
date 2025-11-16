@@ -28,3 +28,12 @@ export const getDomainName = (host: string) => {
     .slice(0, -1)
     .join(".");
 };
+
+export async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) =>
+      setTimeout(() => rej(new Error("Timed out")), ms)
+    ),
+  ]) as Promise<T>;
+}
