@@ -6,22 +6,32 @@ export interface MenuItem {
   weight?: string;
 }
 
-export type MenuType = "daily" | "launch" | "breakfast" | "weekly" | "weekend";
+export type MenuType =
+  | "daily"
+  | "launch"
+  | "breakfast"
+  | "weekly"
+  | "weekend"
+  | "regular"
+  | "special";
 
 export interface RestaurantMenu {
   restaurant_name: string;
   date: string;
   day_of_week?: string;
-  daily_menu: boolean;
   source_url: string;
   menu_items: MenuItem[] | [];
   menu_type?: MenuType;
   image_base64?: string;
-  // for cases when the scraper will return an imagee too (the largest one in the content section)
+}
+
+export interface DetectedMenu extends RestaurantMenu {
+  reason: string | null;
 }
 
 export type ParseResult = {
   text: string;
   image_base64: string | null;
   image_url: string | null;
+  restaurant: string;
 };
