@@ -25,3 +25,8 @@ Example (GitHub Actions cache step):
 ```
 
 If you want, you can change this project to remove the helper and use a direct installation instead.
+
+**NOTES**
+
+- Initial page scrapping is slowed down by converting the largest image found to base64 format in order to display it in the UI. This is not necessary and can be avoided.
+- In `const.ts`, there are restaurantURLs with menu URLs to try (and the reasons why to try).
