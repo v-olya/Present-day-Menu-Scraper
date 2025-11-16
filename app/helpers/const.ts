@@ -107,3 +107,82 @@ Jinak vrať záporný výsledek a \`reason\` nastav na ${
 // Modeld does not respect this rule, so we will use the returned restaurant_name as a fallback only
 // We need consistent restaurant naming...
 // But in real implementation, we should not rely on current scrapper's strategy
+
+export const fakeMenu = [
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "hlavní jídlo",
+    name: "Kuřecí řízek s bramborovou kaší",
+    price: 145,
+    allergens: ["1", "3", "7"],
+    weight: "250g",
+  },
+  {
+    category: "dezert",
+    name: "Panna cotta",
+    price: 55,
+    allergens: ["3", "7"],
+    weight: "80g",
+  },
+  {
+    category: "polévka",
+    name: "Zeleninový vývar s nudlemi",
+    price: 40,
+    allergens: ["1", "9"],
+    weight: "250g",
+  },
+  {
+    category: "polévka",
+    name: "Vánoční rybí polévka",
+    price: 189,
+    allergens: ["3", "4"],
+    weight: "225g",
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+  {
+    category: "polévka",
+    name: "Hovězí vývar s játrovými knedlíčky",
+    price: 65,
+    allergens: ["9"],
+  },
+];
