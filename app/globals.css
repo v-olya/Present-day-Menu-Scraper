@@ -135,7 +135,6 @@ body {
   border-bottom-left-radius: var(--card-radius);
 }
 
-/* Custom scrollbar for category lists */
 .category-card {
   /* Firefox */
   scrollbar-width: thin;
@@ -145,14 +144,8 @@ body {
 .category-card::-webkit-scrollbar {
   width: 8px;
 }
-.category-card::-webkit-scrollbar-track {
-  background: transparent;
-}
 .category-card::-webkit-scrollbar-thumb {
   background: var(--scroll-accent, #065f46);
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
 }
 
 .category-card + .category-card {
