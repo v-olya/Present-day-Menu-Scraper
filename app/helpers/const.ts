@@ -1,15 +1,17 @@
 import { type MenuType } from "./types";
 
 export enum ERROR_MESSAGES {
-  UNREACHABLE_URL = "Uvedená URL adresa není platná.",
-  NAVIGATION_FAILED = "Nepodařilo se načíst cílovou stránku.",
-  EXTRACTION_FAILED = "Nepodařilo se extrahovat obsah stránky.",
+  UNREACHABLE_URL = "Uvedená URL adresa není platná",
+  NAVIGATION_FAILED = "Nepodařilo se načíst cílovou stránku",
+  EXTRACTION_FAILED = "Nepodařilo se extrahovat obsah stránky",
   CACHED_DATE_MISMATCH = "Datum neodpovídá dnešnímu dni",
   NO_MENU_ITEMS = "Žádné položky menu",
   FAILED_PROCESS_MENU_AI = "Nepodařilo se zpracovat menu pomocí AI",
+  AI_SCHEMA_VALIDATION_FAILED = "AI výstup neodpovídá očekávanému formátu",
+  AI_RESPONSE_NOT_JSON = "AI odpověď není validní JSON",
   FAILED_EXTRACT_MENU = "Nepodařilo se extrahovat menu z obsahu",
   UNKNOWN_ERROR = "Neznámá chyba",
-  UNEXPECTED_ERROR = "Došlo k neočekávané chybě. Zkuste to znovu nebo vraťte se zpět.",
+  UNEXPECTED_ERROR = "Došlo k neočekávané chybě. Zkuste to znovu nebo vraťte se zpět",
 }
 
 export enum REASON {
