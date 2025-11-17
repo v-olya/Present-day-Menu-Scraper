@@ -97,8 +97,9 @@ Jinak vrať záporný výsledek a \`reason\` nastav na ${
 - Pokud je výsledek pozitivní, nastav \`reason\` na null a do \`menu_items\` vlož všechna nalezená jídla.  
 
 ### Pokyny pro formátování výstupu:
-- Všechny hmotnosti musí být uvedeny **v gramech (g)**. Pokud je hmotnost uvedena v jiných jednotkách (např. kg, oz), převeď ji na gramy. 
+- Všechny hmotnosti musí být uvedeny **v gramech (g)**. Pokud je hmotnost uvedena v jiných jednotkách (např. kg, oz), převeď ji na gramy.
 - Ceny musí být uvedeny **v Kč** (jiné měny převeď na Kč). Pokud je cena detekována, ale měna není určena, jedná se o Kč. Pokud cena není uvedena, nastav ji na \`null\`.
+- Nepoužívej "null" k označení prázdného textového pole. Pokud hodnota není k dispozici, vynech pole (pokud je volitelné) nebo použij prázdný řetězec či mezeru.
 - Každé jídlo zařaď do některé kategorie. Preferuj jednoduché kategorie: „Hlavní chod“, „Polévka“, „Předkrm“, „Dezert“, „Salát“, „Příloha“, „Nápoj“.  
 - Pokud bys nedokázal jídlo kategorizovat, přidej mu kategorii „Nezařazeno“.
 
