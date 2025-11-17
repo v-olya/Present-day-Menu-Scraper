@@ -68,6 +68,21 @@ export default function Home() {
     abortControllerRef.current = controller;
 
     try {
+      // First, try to get from cache
+      const cacheRes = await fetch(`/cache?url=${encodeURIComponent(url)}`, {
+        signal: controller.signal,
+      });
+      if (cacheRes.ok) {
+        const cacheData = await cacheRes.json();
+        if (cacheData.response) {
+          setFetchedData(cacheData.response);
+          setError(null);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // If not in cache, fetch from /menu
       const res = await fetch("/menu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,9 +97,20 @@ export default function Home() {
         setFetchedData(null);
         return;
       }
-
       setFetchedData(data);
       setError(null);
+
+      // Cache the fetched data
+      try {
+        await fetch("/cache", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, response: JSON.stringify(data.menu) }), // Stringify menu for DB storage
+        });
+        // Avoid disrupting the UI flow
+      } catch (cacheError) {
+        console.warn("Failed to cache data:", cacheError);
+      }
     } catch (error) {
       console.error("Fetch error:", error);
       setError(ERROR_MESSAGES.UNREACHABLE_URL);
