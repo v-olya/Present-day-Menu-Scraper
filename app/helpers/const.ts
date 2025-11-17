@@ -64,12 +64,10 @@ Jestliže není \`image_url\` k dispozici nebo OCR selže, vrať negativní výs
 Pokud OCR uspěje, připoj detekovaný text k původnímu vstupu a pokračuj s kombinovaným textem dle dalších Pokynů.
 
 ### Pokyny pro parsování dat:
-- Ne každé datum v textu se vztahuje k menu, ale pouze ta, která se nacházejí v záhlavích nad ním.
 - Pokud v datu chybí rok, předpokládej aktuální rok.
-- Rozpoznej formáty: \`DD.MM.\`, \`DD. MM.\`, \`D.M.\`, \`D.MM.\` apod.
-- Rozpoznej názvy dnů v týdnu: pondělí, úterý, středa, čtvrtek, pátek, sobota, neděle a přiřaď je ke konkrétnímu datu dle období, pro jaké nabídka platí.
+- Rozpoznej formáty: \`DD.MM.\`, \`DD. MM.\`, \`D.M.\` apod.
 - Rozpoznej intervaly, např.: \`1.–20. 11.\` → rozsah od 1. listopadu do 20. listopadu.
-- Při parsování OCR dat oprav běžné překlepy (např. čárka místo tečky, chybějící diakritika).
+- Pokud je datum v textu uvedeno za nabídkou, nikoli před ní, postupuj tak, jako by tam nebylo.
 
 ### Pokyny pro detekci menu v textu:
 - V každém případě, kdy detekce selže, musí tvůj výstup obsahovat důvod selhání (\`reason\`).
@@ -106,8 +104,8 @@ Jinak vrať záporný výsledek a \`reason\` nastav na ${
 ### Pravidlo pro detekci názvu restaurace:
 - Pokud ${restaurantName} není prázdné, **vždy** jej použij jako název restaurace, jinak zkus název detekovat.`;
 // Modeld does not respect this rule, so we will use the returned restaurant_name as a fallback only
-// We need consistent restaurant naming...
-// But in real implementation, we should not rely on current scrapper's strategy
+// We need consistent restaurant naming, but...
+// In real implementation, we should not rely on the current scrapper strategy, but maintain some mapping between host URL and restaurant name instead
 
 export const fakeMenu = [
   {
