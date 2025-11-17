@@ -2,7 +2,7 @@ import sqlite3 from "sqlite3";
 import path from "path";
 import cron from "node-cron";
 import { getMainSection } from "../app/helpers/scraper";
-import { extractMenuFromHTML } from "../app/helpers/llm";
+import { extractMenuFromHTML } from "../app/helpers/openai";
 
 process.env.TZ = "UTC";
 

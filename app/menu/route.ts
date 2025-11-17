@@ -1,9 +1,9 @@
 import { ERROR_MESSAGES } from "../helpers/const";
 import { getMainSection } from "../helpers/scraper";
-import { extractMenuFromHTML } from "../helpers/llm";
+import { extractMenuFromHTML } from "../helpers/openai";
 import { DetectedMenu } from "../helpers/types";
 import { AiError } from "../helpers/errors";
-import { db } from "../../cache/db_manager";
+import { db } from "../../db/db_manager";
 import crypto from "crypto";
 
 export async function POST(req: Request) {

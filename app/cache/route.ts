@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, notifyOnNewMenu } from "../../cache/db_manager";
+import { db, notifyOnNewMenu } from "../../db/db_manager";
 import { withTimeout } from "../helpers/functions";
 
 export async function GET(request: NextRequest) {
