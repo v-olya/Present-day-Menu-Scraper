@@ -1,13 +1,12 @@
 import { chromium } from "playwright";
 import type { Browser, Page, APIResponse, BrowserContext } from "playwright";
 import { ParseResult } from "./types";
-import { getDomainName, withTimeout } from "./functions";
+import { withTimeout } from "./functions";
 
 const restaurantKeywords = ["restaurace", "restaurant", "bistro", "pizzeria"];
 
 export async function getMainSection(url: string): Promise<ParseResult> {
-  const { origin, hostname } = new URL(url);
-  const fallbackRestaurant = getDomainName(hostname) || hostname;
+  const { origin } = new URL(url);
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
   let page: Page | null = null;
@@ -17,7 +16,7 @@ export async function getMainSection(url: string): Promise<ParseResult> {
     text: "",
     image_url: null,
     image_base64: null,
-    restaurant: fallbackRestaurant,
+    restaurant: "",
   });
 
   async function safeClose(
@@ -185,7 +184,7 @@ export async function getMainSection(url: string): Promise<ParseResult> {
     }
 
     // Determine restaurant name from home link or logo alt text.
-    let restaurant: string = fallbackRestaurant;
+    let restaurant: string = "";
     try {
       // Scan matching anchors in document order and pick the best candidate.
       const anchors = page.locator(
@@ -221,11 +220,10 @@ export async function getMainSection(url: string): Promise<ParseResult> {
           break;
         }
       }
-      // Prefer a keyword match, then first anchor image alt, then first anchor text, then hostname.
-      restaurant =
-        matched ?? firstAnchorImgAlt ?? firstAnchorText ?? fallbackRestaurant;
+      // Prefer a keyword match, then first anchor image alt, then first anchor text.
+      restaurant = matched ?? firstAnchorImgAlt ?? firstAnchorText ?? "";
     } catch {
-      restaurant = fallbackRestaurant;
+      restaurant = "";
     }
 
     // Get base64 thumbnail for the chosen image (if any)

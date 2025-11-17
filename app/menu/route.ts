@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     }
 
     // If the scraper detected a restaurant name, prefer it over the LLM result.
-    if (menu && scraped.restaurant.trim()) {
+    if (menu && scraped?.restaurant?.trim()) {
       menu.restaurant_name = scraped.restaurant.trim();
     }
 
