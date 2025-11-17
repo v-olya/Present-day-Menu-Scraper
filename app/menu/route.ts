@@ -3,6 +3,8 @@ import { getMainSection } from "../helpers/scraper";
 import { extractMenuFromHTML } from "../helpers/llm";
 import { DetectedMenu } from "../helpers/types";
 import { AiError } from "../helpers/errors";
+import { db } from "../../cache/db_manager";
+import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -93,6 +95,19 @@ export async function POST(req: Request) {
           scraped,
         }),
         { status: 500, headers: { "content-type": "application/json" } }
+      );
+    }
+
+    // Start polling if menu not detected
+    if (!menu?.menu_items?.length) {
+      const hash = crypto
+        .createHash("sha256")
+        .update(scraped.text)
+        .digest("hex");
+      await db.runAsync(
+        "INSERT OR REPLACE INTO polling (url, last_hash) VALUES (?, ?)",
+        url,
+        hash
       );
     }
 
