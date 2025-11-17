@@ -75,7 +75,8 @@ export default function Home() {
       if (cacheRes.ok) {
         const cacheData = await cacheRes.json();
         if (cacheData.response) {
-          setFetchedData(cacheData.response);
+          const cachedResponse = cacheData.response?.menu ?? cacheData.response;
+          setFetchedData(cachedResponse);
           setError(null);
           setIsLoading(false);
           return;
@@ -90,14 +91,14 @@ export default function Home() {
         signal: controller.signal,
       });
 
-      const data = await res.json();
+      const resData = await res.json();
 
-      if (!res.ok || data.error) {
-        setError(data.error || ERROR_MESSAGES.UNREACHABLE_URL);
+      if (!res.ok || resData.error) {
+        setError(resData.error || ERROR_MESSAGES.UNREACHABLE_URL);
         setFetchedData(null);
         return;
       }
-      setFetchedData(data);
+      setFetchedData(resData);
       setError(null);
 
       // Cache the fetched data
@@ -105,7 +106,7 @@ export default function Home() {
         await fetch("/cache", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, response: JSON.stringify(data.menu) }), // Stringify menu for DB storage
+          body: JSON.stringify({ url, response: resData.menu ?? resData }),
         });
         // Avoid disrupting the UI flow
       } catch (cacheError) {
