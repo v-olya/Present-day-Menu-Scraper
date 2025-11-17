@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import type { Browser, Page, APIResponse } from "playwright";
+import type { Browser, Page, APIResponse, BrowserContext } from "playwright";
 import { ParseResult } from "./types";
 import { getDomainName, withTimeout } from "./functions";
 
@@ -9,6 +9,7 @@ export async function getMainSection(url: string): Promise<ParseResult> {
   const { origin, hostname } = new URL(url);
   const fallbackRestaurant = getDomainName(hostname) || hostname;
   let browser: Browser | null = null;
+  let context: BrowserContext | null = null;
   let page: Page | null = null;
   type EvalResult = { text: string; largestImageSrc: string | null };
 
@@ -19,9 +20,25 @@ export async function getMainSection(url: string): Promise<ParseResult> {
     restaurant: fallbackRestaurant,
   });
 
+  async function safeClose(
+    resource: { close: () => Promise<void> },
+    name: string
+  ) {
+    try {
+      await resource.close();
+    } catch (err) {
+      console.debug(`${name}.close failed`, stringifyErr(err));
+    }
+  }
+
   try {
     browser = await chromium.launch({ timeout: 30000 });
-    page = await browser.newPage();
+    context = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      viewport: { width: 1280, height: 720 },
+    });
+    page = await context.newPage();
     page.setDefaultTimeout(10000);
     page.setDefaultNavigationTimeout(15000);
     // Try to resolve server-side redirects with a short request; fall back to original URL.
@@ -65,7 +82,7 @@ export async function getMainSection(url: string): Promise<ParseResult> {
     ]) {
       try {
         const loc = page.locator(selector).first();
-        if ((await loc.count()) > 0 && (await loc.isVisible())) {
+        if ((await loc.count()) && (await loc.isVisible())) {
           await loc
             .click({ timeout: 2000 })
             .catch((err: unknown) =>
@@ -184,8 +201,9 @@ export async function getMainSection(url: string): Promise<ParseResult> {
         const aText = (await a.textContent())?.trim() ?? "";
         const img = a.locator("img, picture img").first();
         const imgCount = await img.count();
-        const alt =
-          imgCount > 0 ? (await img.getAttribute("alt"))?.trim() ?? "" : "";
+        const alt = imgCount
+          ? (await img.getAttribute("alt"))?.trim() ?? ""
+          : "";
 
         // capture first anchor values for later fallback
         if (i === 0) {
@@ -246,13 +264,9 @@ export async function getMainSection(url: string): Promise<ParseResult> {
     console.error("getMainSection failed", stringifyErr(err));
     return defaultResult();
   } finally {
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeErr) {
-        console.debug("browser.close failed", stringifyErr(closeErr));
-      }
-    }
+    if (page) await safeClose(page, "page");
+    if (context) await safeClose(context, "context");
+    if (browser) await safeClose(browser, "browser");
   }
   function stringifyErr(err: unknown) {
     if (err instanceof Error) return err.message;
