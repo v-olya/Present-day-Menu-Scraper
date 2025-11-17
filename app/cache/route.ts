@@ -1,27 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../cache/db_manager";
+import { db, notifyOnNewMenu } from "../../cache/db_manager";
 import { withTimeout } from "../helpers/functions";
-
-// Callback for change notification (sends to Discord)
-const notifyOnNewMenu = async (restaurantName: string) => {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  if (!webhookUrl) {
-    console.warn("DISCORD_WEBHOOK_URL not set");
-    return;
-  }
-  try {
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: `${restaurantName}: Menu changed`,
-      }),
-    });
-    console.log(`${restaurantName}: Notification sent`);
-  } catch (err) {
-    console.error(`${restaurantName}: Notification failed`, err);
-  }
-};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -61,7 +40,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ response: null }, { status: 404 });
       }
     })(),
-    5000 // 5s timeout
+    5000
   ).catch((err) =>
     NextResponse.json({ error: (err as Error).message }, { status: 500 })
   );
