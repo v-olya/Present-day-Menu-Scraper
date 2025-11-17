@@ -16,5 +16,5 @@ export const ALLERGENS: Record<string, string> = {
 };
 
 export function getAllergenDescriptions(codes: string[] = []): string[] {
-  return codes.map((c) => ALLERGENS[c] ?? `Neznámý alergen (${c})`);
+  return codes.map((c) => ALLERGENS[c] ?? c);
 }

@@ -19,7 +19,7 @@ export default function Home() {
   const data: RestaurantMenu = {
     restaurant_name: "Restaurace Example",
     source_url: "http://example.com/menu",
-    date: "2025-11-16",
+    date: "2025-11-17",
     menu_items: fakeMenu,
     menu_type: "launch",
     image_base64:
@@ -113,7 +113,9 @@ export default function Home() {
   ).sort();
   const filteredItems = current.menu_items.filter(
     (item: MenuItem) =>
-      !selectedAllergens.some((allergen) => item.allergens?.includes(allergen))
+      !selectedAllergens.some((allergen) =>
+        item.allergens?.some((a) => a.toLowerCase() === allergen.toLowerCase())
+      )
   );
 
   const menuContent = Object.entries(groupDishes(filteredItems)).map(
@@ -139,9 +141,9 @@ export default function Home() {
                     )}
                   </div>
                   <div className="text-right mr-6">
-                    <p className="font-medium">{item.price} CZK</p>
+                    <p className="font-medium">{item.price ?? ""} CZK</p>
                     {item.weight && (
-                      <p className="text-sm mt-1">Porce: {item.weight}</p>
+                      <p className="text-sm mt-1">Porce: {item.weight ?? ""}</p>
                     )}
                   </div>
                 </div>
