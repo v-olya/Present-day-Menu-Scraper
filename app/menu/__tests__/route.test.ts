@@ -19,7 +19,8 @@ jest.mock("../../../db/db_manager", () => {
   return {
     __esModule: true,
     db: {
-      runAsync: jest.fn().mockResolvedValue(undefined),
+      run: jest.fn().mockResolvedValue(undefined),
+      all: jest.fn().mockResolvedValue([]),
     },
   };
 });
@@ -27,7 +28,6 @@ jest.mock("../../../db/db_manager", () => {
 import { POST } from "../route";
 import { NextRequest } from "next/server";
 import * as dbManager from "../../../db/db_manager";
-import type { AsyncDatabase } from "../../../db/db_manager";
 import { ERROR_MESSAGES } from "../../helpers/const";
 
 const { mockCreate } = jest.requireMock("openai") as unknown as {
@@ -72,11 +72,11 @@ function makeMockPage({
 }
 
 function mockDbResolve(value?: unknown) {
-  (dbManager.db.runAsync as jest.Mock).mockResolvedValue(value);
+  (dbManager.db.run as jest.Mock).mockResolvedValue(value);
 }
 
 function mockDbRejectOnce(err: unknown = new Error("DB ERROR")) {
-  (dbManager.db.runAsync as jest.Mock).mockRejectedValueOnce(err);
+  (dbManager.db.run as jest.Mock).mockRejectedValueOnce(err);
 }
 
 //*** End Helpers section ***//
@@ -159,17 +159,15 @@ describe("/menu POST Integration Tests", () => {
     );
 
     // DB manager should not start polling because menu_items exist -->> assert the polling INSERT was not executed,
-    expect(
-      (dbManager.db as jest.Mocked<AsyncDatabase>).runAsync
-    ).not.toHaveBeenCalledWith(
+    expect(dbManager.db.run as jest.Mock).not.toHaveBeenCalledWith(
       expect.stringContaining("INSERT OR REPLACE INTO polling"),
       expect.anything(),
       expect.anything()
     );
   });
 
-  it("DB failure: returns 500 and does not crash when db.runAsync rejects", async () => {
-    // Make LLM return (valid) empty menu for route to call db.runAsync
+  it("DB failure: returns 500 and does not crash when db.run rejects", async () => {
+    // Make LLM return (valid) empty menu for route to call db.run
     const mockEmptyResponse = {
       choices: [
         {

@@ -5,21 +5,21 @@ import * as dbManager from "../../../db/db_manager";
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
 type MockedDb = {
-  getAsync: jest.MockedFunction<
+  get: jest.MockedFunction<
     (
       sql: string,
       ...params: unknown[]
     ) => Promise<Record<string, unknown> | undefined>
   >;
-  runAsync: jest.MockedFunction<
+  run: jest.MockedFunction<
     (sql: string, ...params: unknown[]) => Promise<void>
   >;
 };
 
 jest.mock("../../../db/db_manager", () => ({
   db: {
-    getAsync: jest.fn(),
-    runAsync: jest.fn(),
+    get: jest.fn(),
+    run: jest.fn(),
   },
   notifyOnNewMenu: jest.fn(),
 }));
@@ -31,7 +31,7 @@ describe("/cache API Tests", () => {
 
   it("GET returns cached data if exists", async () => {
     const cachedData = JSON.stringify({ menu: "cached menu" });
-    (dbManager.db as unknown as MockedDb).getAsync.mockResolvedValue({
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({
       response: cachedData,
     });
 
@@ -43,14 +43,14 @@ describe("/cache API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(result.response.menu).toEqual({ menu: "cached menu" });
-    expect((dbManager.db as unknown as MockedDb).getAsync).toHaveBeenCalledWith(
+    expect((dbManager.db as unknown as MockedDb).get).toHaveBeenCalledWith(
       "SELECT response FROM cache WHERE key = ?",
       `https://example.com_${getTodayDate()}`
     ); // Assuming today's date
   });
 
   it("GET returns 404 if no cache", async () => {
-    (dbManager.db as unknown as MockedDb).getAsync.mockResolvedValue(undefined);
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue(undefined);
 
     const req = new NextRequest(
       "http://localhost/cache?url=https://example.com"
@@ -63,8 +63,8 @@ describe("/cache API Tests", () => {
   });
 
   it("POST stores data in cache", async () => {
-    (dbManager.db as unknown as MockedDb).getAsync.mockResolvedValue(undefined); // No existing
-    (dbManager.db as unknown as MockedDb).runAsync.mockResolvedValue(undefined);
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue(undefined); // No existing
+    (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
     const req = new NextRequest("http://localhost/cache", {
       method: "POST",
@@ -78,7 +78,7 @@ describe("/cache API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(result.success).toBe(true);
-    expect((dbManager.db as unknown as MockedDb).runAsync).toHaveBeenCalledWith(
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenCalledWith(
       "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
       `https://example.com_${getTodayDate()}`,
       JSON.stringify({ menu: "new menu" })
@@ -97,7 +97,7 @@ describe("/cache API Tests", () => {
 
   it("GET returns 500 when cached data is invalid JSON", async () => {
     // db returns a string that is not valid JSON
-    (dbManager.db as unknown as MockedDb).getAsync.mockResolvedValue({
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({
       response: "not-a-json",
     });
 
@@ -125,10 +125,10 @@ describe("/cache API Tests", () => {
 
   it("POST does not notify when cache entry already exists", async () => {
     // Simulate existing cache entry
-    (dbManager.db as unknown as MockedDb).getAsync.mockResolvedValue({
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({
       exists: 1,
     });
-    (dbManager.db as unknown as MockedDb).runAsync.mockResolvedValue(undefined);
+    (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
     const req = new NextRequest("http://localhost/cache", {
       method: "POST",
@@ -143,12 +143,12 @@ describe("/cache API Tests", () => {
     expect(response.status).toBe(200);
     expect(result.success).toBe(true);
     expect(dbManager.notifyOnNewMenu).not.toHaveBeenCalled();
-    expect((dbManager.db as unknown as MockedDb).runAsync).toHaveBeenCalled();
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenCalled();
   });
 
   it("POST notifies with provided restaurant_name when creating new entry", async () => {
-    (dbManager.db as unknown as MockedDb).getAsync.mockResolvedValue(undefined); // No existing
-    (dbManager.db as unknown as MockedDb).runAsync.mockResolvedValue(undefined);
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue(undefined); // No existing
+    (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
     const req = new NextRequest("http://localhost/cache", {
       method: "POST",
