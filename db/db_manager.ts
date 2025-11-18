@@ -1,3 +1,4 @@
+import { open } from "sqlite";
 import sqlite3 from "sqlite3";
 import path from "path";
 import cron from "node-cron";
@@ -8,30 +9,16 @@ process.env.TZ = "UTC";
 
 const dbPath = path.join(process.cwd(), "db", "responses.db");
 
-export interface AsyncDatabase extends sqlite3.Database {
-  //can't use @types/sqlite3 because it seems outdated
-  runAsync(sql: string, ...params: unknown[]): Promise<void>;
-  getAsync(
-    sql: string,
-    ...params: unknown[]
-  ): Promise<Record<string, unknown> | undefined>;
-  allAsync(
-    sql: string,
-    ...params: unknown[]
-  ): Promise<Record<string, unknown>[]>;
-}
+const db = await open({ filename: dbPath, driver: sqlite3.Database });
 
-const db = new sqlite3.Database(dbPath) as AsyncDatabase;
-
-// Create table if not exists
-db.run(`CREATE TABLE IF NOT EXISTS cache (
+// Create tables
+await db.run(`CREATE TABLE IF NOT EXISTS cache (
   key TEXT PRIMARY KEY,
   response TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);
 
-// Create polling table
-db.run(`CREATE TABLE IF NOT EXISTS polling (
+await db.run(`CREATE TABLE IF NOT EXISTS polling (
   url TEXT PRIMARY KEY,
   last_hash TEXT
 )`);
@@ -57,22 +44,26 @@ const notifyOnNewMenu = async (restaurantName: string) => {
   }
 };
 
-// Schedule cleanup at midnight every day
-cron.schedule("0 0 * * *", async () => {
-  try {
-    await db.runAsync(
-      `DELETE FROM cache WHERE key NOT LIKE '%_' || date('now')`
-    );
-    console.log("Cache cleaned at midnight");
-  } catch (err) {
-    console.error("Error cleaning cache:", err);
+// Schedule cleanup every midnight UTC
+cron.schedule(
+  "0 0 * * *",
+  async () => {
+    try {
+      await db.run(`DELETE FROM cache WHERE key NOT LIKE '%_' || date('now')`);
+      console.log("Cache cleaned");
+    } catch (err) {
+      console.error("Error cleaning cache:", err);
+    }
+  },
+  {
+    timezone: "UTC",
   }
-});
+);
 
 // Schedule polling every hour
 cron.schedule("0 * * * *", async () => {
   try {
-    const pollingRows = await db.allAsync("SELECT url, last_hash FROM polling");
+    const pollingRows = await db.all("SELECT url, last_hash FROM polling");
     for (const row of pollingRows) {
       const url = row.url as string;
       const lastHash = row.last_hash as string;
@@ -101,17 +92,17 @@ cron.schedule("0 * * * *", async () => {
               source_url: url,
               image_base64: scraped.image_base64,
             };
-            await db.runAsync(
+            await db.run(
               "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
               key,
               JSON.stringify(response)
             );
             notifyOnNewMenu(menu.restaurant_name || scraped.restaurant);
             // Remove from polling
-            await db.runAsync("DELETE FROM polling WHERE url = ?", url);
+            await db.run("DELETE FROM polling WHERE url = ?", url);
           } else {
             // Update hash
-            await db.runAsync(
+            await db.run(
               "UPDATE polling SET last_hash = ? WHERE url = ?",
               newHash,
               url
