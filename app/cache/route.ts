@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       ) {
         try {
           const menu = JSON.parse((row as { response: string }).response);
-          return NextResponse.json({ response: { menu } });
+          return NextResponse.json({ menu });
         } catch (parseErr) {
           console.error("Failed to parse cached data:", parseErr);
           return NextResponse.json(
@@ -58,6 +58,10 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+  // Ensure table exists with PRIMARY KEY
+  await db.run(
+    "CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, response TEXT)"
+  );
   const date = new Date().toISOString().split("T")[0];
   const key = url + "_" + date;
 
@@ -74,11 +78,22 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert or replace
-      await db.run(
-        "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
-        key,
-        JSON.stringify(response)
-      );
+      if (existing) {
+        await db.run(
+          "UPDATE cache SET response = ? WHERE key = ?",
+          JSON.stringify(response),
+          key
+        );
+      } else {
+        await db.run(
+          "INSERT INTO cache (key, response) VALUES (?, ?)",
+          key,
+          JSON.stringify(response)
+        );
+      }
+      // Remove from polling since menu is now cached manually
+      await db.run("DELETE FROM polling WHERE url = ?", url);
+
       return NextResponse.json({ success: true });
     })(),
     5000 // 5s timeout
