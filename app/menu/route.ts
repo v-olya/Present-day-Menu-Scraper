@@ -5,6 +5,7 @@ import { DetectedMenu } from "../helpers/types";
 import { AiError } from "../helpers/errors";
 import { db } from "../../db/db_manager";
 import crypto from "crypto";
+import { normalizeUrl } from "../helpers/functions";
 
 export async function POST(req: Request) {
   try {
@@ -104,9 +105,10 @@ export async function POST(req: Request) {
         .createHash("sha256")
         .update(scraped.text)
         .digest("hex");
+      const normalizedUrl = normalizeUrl(url);
       await db.run(
         "INSERT OR REPLACE INTO polling (url, last_hash) VALUES (?, ?)",
-        url,
+        normalizedUrl,
         hash
       );
     }

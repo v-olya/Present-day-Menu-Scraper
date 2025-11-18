@@ -20,15 +20,26 @@ export const formatDate = (date: string): string => {
   return capitalize(new Date(date).toLocaleDateString("cs-CZ", options));
 };
 
-export const getDomainName = (host: string) => {
-  // non-reliable extractor: we need domain name as a fallback for the restaurant_name
-  return host
-    .replace(/^www\./, "")
-    .split(".")
-    .slice(0, -1)
-    .join(".");
+export const normalizeUrl = (url: string) => {
+  // Normalize URL for stable cache keys: lowercase host, remove trailing slashes
+  try {
+    const trimmed = url.trim();
+    // If it's not an absolute URL, just trim/remove trailing slash
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      return trimmed.replace(/\/+$/g, "");
+    }
+    const host = parsed.host.toLowerCase();
+    const pathname = parsed.pathname.replace(/\/+$/g, "");
+    const search = parsed.search || "";
+    // Preserve the original protocol
+    return `${parsed.protocol}//${host}${pathname}${search}`;
+  } catch {
+    return url;
+  }
 };
-
 export async function withTimeout<T>(
   p: Promise<T>,
   ms: number,

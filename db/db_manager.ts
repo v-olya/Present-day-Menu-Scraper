@@ -86,7 +86,10 @@ cron.schedule("0 * * * *", async () => {
           if (menu?.menu_items?.length) {
             // Save to cache
             const date = new Date().toISOString().split("T")[0];
-            const key = url + "_" + date;
+            // normalize URL for stable cache key
+            const { normalizeUrl } = await import("../app/helpers/functions");
+            const normalized = normalizeUrl(url);
+            const key = normalized + "_" + date;
             const response = {
               ...menu,
               source_url: url,
@@ -98,8 +101,12 @@ cron.schedule("0 * * * *", async () => {
               JSON.stringify(response)
             );
             notifyOnNewMenu(menu.restaurant_name || scraped.restaurant);
-            // Remove from polling
-            await db.run("DELETE FROM polling WHERE url = ?", url);
+            // Remove from polling (match both normalized and original form)
+            await db.run(
+              "DELETE FROM polling WHERE url = ? OR url = ?",
+              normalized,
+              url
+            );
           } else {
             // Update hash
             await db.run(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, notifyOnNewMenu } from "../../db/db_manager";
-import { withTimeout } from "../helpers/functions";
+import { withTimeout, normalizeUrl } from "../helpers/functions";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     );
   }
   const date = new Date().toISOString().split("T")[0];
-  const key = url + "_" + date;
+  const key = normalizeUrl(url) + "_" + date;
   return withTimeout(
     (async (): Promise<NextResponse> => {
       const row = await db.get("SELECT response FROM cache WHERE key = ?", key);
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     "CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, response TEXT)"
   );
   const date = new Date().toISOString().split("T")[0];
-  const key = url + "_" + date;
+  const key = normalizeUrl(url) + "_" + date;
 
   return withTimeout(
     (async (): Promise<NextResponse> => {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         );
       }
       // Remove from polling since menu is now cached manually
-      await db.run("DELETE FROM polling WHERE url = ?", url);
+      await db.run("DELETE FROM polling WHERE url = ?", normalizeUrl(url));
 
       return NextResponse.json({ success: true });
     })(),
