@@ -29,6 +29,7 @@ export const restaurantURLs = [
   "https://pikmenu.com/cs/jidelna-u-jaurisu/cs", // hidden menu, Ut-Pá * NB! "Manual" restaurant_name detection fails because the site is a hub
   "https://www.500restaurant.cz/denni-menu/", // popup, Po-Pá
   "http://www.deminka.com/stale-menu/", // redirect; regular menu
+  "https://www.uveverky.com/poledni-menu/", // <noscript> with <src-set image> inside a link to homepage
 ];
 
 export const getMenuTypeText = (type: MenuType) => {
@@ -68,6 +69,7 @@ Pokud OCR uspěje, připoj detekovaný text k původnímu vstupu a pokračuj s k
 - Rozpoznej formáty: \`DD.MM.\`, \`DD. MM.\`, \`D.M.\` apod.
 - Rozpoznej intervaly, např.: \`1.–20. 11.\` → rozsah od 1. listopadu do 20. listopadu.
 - Pokud je datum v textu uvedeno za nabídkou, nikoli před ní, postupuj tak, jako by tam nebylo.
+- Pokud je menu „Stálé“, znamená to, že platí každý den, kdy je podnik otevřený.
 
 ### Pokyny pro detekci menu v textu:
 - V každém případě, kdy detekce selže, musí tvůj výstup obsahovat důvod selhání (\`reason\`).
@@ -79,7 +81,7 @@ Pokud OCR uspěje, připoj detekovaný text k původnímu vstupu a pokračuj s k
 Vrať kladný výsledek pouze pokud dnešek tomuto období patří. Pokud bys třeba detekoval víkendové menu, když je dnes všední den, vrať negativní výsledek a \`reason\` nastav na ${
   REASON.RANGE_MISMATCH
 }.
-- Pokud v textu detekuješ několik nabídek pro různé dny v týdnu nebo různá období (páteční nabídka, od pondělí do středy atd.), kladný výsledek vrať POUZE V PŘÍPADĚ, 
+- Pokud v textu detekuješ různé nabídky pro různé dny v týdnu nebo různá období (páteční nabídka, od pondělí do středy atd.), kladný výsledek vrať POUZE V PŘÍPADĚ, 
 že dnešní den odpovídá jednomu z nalezených dní nebo období (než vratíš kladný výsledek, ověř pro jistotu, zda se nejedná o situaci popsanou v dalším bodě). V opačném případě vrať záporný výsledek a \`reason\` nastav na ${
   REASON.MULTIPLE_OFFERS_NO_MATCH
 }. Žádný fallback na jiný den není povolen.
@@ -103,9 +105,9 @@ Jinak vrať záporný výsledek a \`reason\` nastav na ${
 
 ### Pravidlo pro detekci názvu restaurace:
 - Pokud ${restaurantName} není prázdné, **vždy** jej použij jako název restaurace, jinak zkus název detekovat.`;
-// Modeld does not respect this rule, so we will use the returned restaurant_name as a fallback only
 // We need consistent restaurant naming, but...
-// In real implementation, we should not rely on the current scrapper strategy, but maintain some mapping between host URL and restaurant name instead
+// Modeld does not respect this rule, so we will use the returned restaurant_name as a fallback only
+// In real implementation, we should not rely on current scrapper strategy, but maintain some mapping between host URL and restaurant name instead
 
 export const fakeMenu = [
   {
