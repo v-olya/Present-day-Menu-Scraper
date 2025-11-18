@@ -28,7 +28,7 @@ const detectedMenuSchema = {
           },
           weight: { type: "string" },
         },
-        required: ["category", "name", "price", "allergens"],
+        required: ["category", "name", "price", "allergens", "weight"],
         additionalProperties: false,
       },
     },
