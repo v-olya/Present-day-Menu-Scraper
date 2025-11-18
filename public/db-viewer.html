@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQLite Database Viewer</title>
+    <script src="https://sql.js.org/dist/sql-wasm.js"></script>
+  </head>
+  <body>
+    <h1>SQLite Database Viewer</h1>
+    <div id="output"></div>
+    <script>
+      initSqlJs({
+        locateFile: (file) => `https://sql.js.org/dist/${file}`,
+      }).then(function (SQL) {
+        fetch("/api/db-viewer/db")
+          .then((response) => response.arrayBuffer())
+          .then(function (buffer) {
+            var db = new SQL.Database(new Uint8Array(buffer));
+            var tables = db.exec(
+              "SELECT name FROM sqlite_master WHERE type='table'"
+            );
+            var output = document.getElementById("output");
+            tables[0].values.forEach(function (table) {
+              var tableName = table[0];
+              var result = db.exec("SELECT * FROM " + tableName);
+              output.innerHTML += "<h2>" + tableName + "</h2>";
+              if (result.length > 0) {
+                var columns = result[0].columns;
+                var values = result[0].values;
+                var tableHtml = '<table border="1"><thead><tr>';
+                columns.forEach(function (col) {
+                  tableHtml += "<th>" + col + "</th>";
+                });
+                tableHtml += "</tr></thead><tbody>";
+                values.forEach(function (row) {
+                  tableHtml += "<tr>";
+                  row.forEach(function (cell) {
+                    tableHtml += "<td>" + cell + "</td>";
+                  });
+                  tableHtml += "</tr>";
+                });
+                tableHtml += "</tbody></table>";
+                output.innerHTML += tableHtml;
+              }
+            });
+          });
+      });
+    </script>
+  </body>
+</html>
