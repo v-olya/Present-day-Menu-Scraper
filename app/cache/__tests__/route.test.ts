@@ -30,7 +30,18 @@ describe("/cache API Tests", () => {
   });
 
   it("GET returns cached data if exists", async () => {
-    const cachedData = JSON.stringify({ menu: "cached menu" });
+    const cachedData = JSON.stringify({
+      restaurant_name: "Cached Cafe",
+      menu_items: [
+        {
+          category: "soup",
+          name: "Cached Soup",
+          price: 40,
+          allergens: [],
+          weight: "300g",
+        },
+      ],
+    });
     (dbManager.db as unknown as MockedDb).get.mockResolvedValue({
       response: cachedData,
     });
@@ -42,7 +53,18 @@ describe("/cache API Tests", () => {
     const result = await response.json();
 
     expect(response.status).toBe(200);
-    expect(result.response.menu).toEqual({ menu: "cached menu" });
+    expect(result.menu).toEqual({
+      restaurant_name: "Cached Cafe",
+      menu_items: [
+        {
+          category: "soup",
+          name: "Cached Soup",
+          price: 40,
+          allergens: [],
+          weight: "300g",
+        },
+      ],
+    });
     expect((dbManager.db as unknown as MockedDb).get).toHaveBeenCalledWith(
       "SELECT response FROM cache WHERE key = ?",
       `https://example.com_${getTodayDate()}`
@@ -70,7 +92,18 @@ describe("/cache API Tests", () => {
       method: "POST",
       body: JSON.stringify({
         url: "https://example.com",
-        response: { menu: "new menu" },
+        response: {
+          restaurant_name: "Fancy Cafe",
+          menu_items: [
+            {
+              category: "soup",
+              name: "Soup",
+              price: 50,
+              allergens: [],
+              weight: "200g",
+            },
+          ],
+        },
       }),
     });
     const response = await POST(req);
@@ -78,12 +111,29 @@ describe("/cache API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(result.success).toBe(true);
-    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenCalledWith(
-      "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
+      2,
+      "INSERT INTO cache (key, response) VALUES (?, ?)",
       `https://example.com_${getTodayDate()}`,
-      JSON.stringify({ menu: "new menu" })
+      JSON.stringify({
+        restaurant_name: "Fancy Cafe",
+        menu_items: [
+          {
+            category: "soup",
+            name: "Soup",
+            price: 50,
+            allergens: [],
+            weight: "200g",
+          },
+        ],
+      })
     );
-    expect(dbManager.notifyOnNewMenu).toHaveBeenCalledWith("Unknown");
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
+      3,
+      "DELETE FROM polling WHERE url = ?",
+      "https://example.com"
+    );
+    expect(dbManager.notifyOnNewMenu).toHaveBeenCalledWith("Fancy Cafe");
   });
 
   it("GET returns 400 when url param is missing", async () => {
@@ -126,7 +176,18 @@ describe("/cache API Tests", () => {
   it("POST does not notify when cache entry already exists", async () => {
     // Simulate existing cache entry
     (dbManager.db as unknown as MockedDb).get.mockResolvedValue({
-      exists: 1,
+      response: JSON.stringify({
+        restaurant_name: "Fancy Cafe",
+        menu_items: [
+          {
+            category: "soup",
+            name: "Soup",
+            price: 50,
+            allergens: [],
+            weight: "200g",
+          },
+        ],
+      }),
     });
     (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
@@ -134,7 +195,18 @@ describe("/cache API Tests", () => {
       method: "POST",
       body: JSON.stringify({
         url: "https://example.com",
-        response: { restaurant_name: "Cafe", menu: [] },
+        response: {
+          restaurant_name: "Cafe",
+          menu_items: [
+            {
+              category: "soup",
+              name: "Soup",
+              price: 50,
+              allergens: [],
+              weight: "200g",
+            },
+          ],
+        },
       }),
     });
     const response = await POST(req);
@@ -143,7 +215,28 @@ describe("/cache API Tests", () => {
     expect(response.status).toBe(200);
     expect(result.success).toBe(true);
     expect(dbManager.notifyOnNewMenu).not.toHaveBeenCalled();
-    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenCalled();
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
+      2,
+      "UPDATE cache SET response = ? WHERE key = ?",
+      JSON.stringify({
+        restaurant_name: "Cafe",
+        menu_items: [
+          {
+            category: "soup",
+            name: "Soup",
+            price: 50,
+            allergens: [],
+            weight: "200g",
+          },
+        ],
+      }),
+      `https://example.com_${getTodayDate()}`
+    );
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
+      3,
+      "DELETE FROM polling WHERE url = ?",
+      "https://example.com"
+    );
   });
 
   it("POST notifies with provided restaurant_name when creating new entry", async () => {
@@ -154,7 +247,18 @@ describe("/cache API Tests", () => {
       method: "POST",
       body: JSON.stringify({
         url: "https://example.com",
-        response: { restaurant_name: "Fancy Cafe", menu: [] },
+        response: {
+          restaurant_name: "Fancy Cafe",
+          menu_items: [
+            {
+              category: "soup",
+              name: "Soup",
+              price: 50,
+              allergens: [],
+              weight: "200g",
+            },
+          ],
+        },
       }),
     });
     const response = await POST(req);
@@ -162,6 +266,28 @@ describe("/cache API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(result.success).toBe(true);
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
+      2,
+      "INSERT INTO cache (key, response) VALUES (?, ?)",
+      `https://example.com_${getTodayDate()}`,
+      JSON.stringify({
+        restaurant_name: "Fancy Cafe",
+        menu_items: [
+          {
+            category: "soup",
+            name: "Soup",
+            price: 50,
+            allergens: [],
+            weight: "200g",
+          },
+        ],
+      })
+    );
+    expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
+      3,
+      "DELETE FROM polling WHERE url = ?",
+      "https://example.com"
+    );
     expect(dbManager.notifyOnNewMenu).toHaveBeenCalledWith("Fancy Cafe");
   });
 });

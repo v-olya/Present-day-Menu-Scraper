@@ -132,6 +132,7 @@ describe("extractMenuFromHTML", () => {
                   name: "Salad",
                   price: 5,
                   allergens: [],
+                  weight: "100g",
                 },
               ],
               rationale: ["r"],
