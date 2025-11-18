@@ -6,7 +6,7 @@ import { extractMenuFromHTML } from "../app/helpers/openai";
 
 process.env.TZ = "UTC";
 
-const dbPath = path.join(process.cwd(), "cache", "responses.db");
+const dbPath = path.join(process.cwd(), "db", "responses.db");
 
 export interface AsyncDatabase extends sqlite3.Database {
   //can't use @types/sqlite3 because it seems outdated
