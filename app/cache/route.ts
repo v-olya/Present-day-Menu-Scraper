@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
   const key = url + "_" + date;
   return withTimeout(
     (async (): Promise<NextResponse> => {
-      const row = await db.get(
-        "SELECT response FROM cache WHERE key = ?",
-        key
-      );
+      const row = await db.get("SELECT response FROM cache WHERE key = ?", key);
       if (
         row &&
         typeof row === "object" &&
@@ -55,16 +52,19 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+  if (!response.menu_items?.length) {
+    return NextResponse.json(
+      { error: "Response with empty menu_items" },
+      { status: 400 }
+    );
+  }
   const date = new Date().toISOString().split("T")[0];
   const key = url + "_" + date;
 
   return withTimeout(
     (async (): Promise<NextResponse> => {
       // Check if key exists
-      const existing = await db.get(
-        "SELECT 1 FROM cache WHERE key = ?",
-        key
-      );
+      const existing = await db.get("SELECT 1 FROM cache WHERE key = ?", key);
       const isNew = !existing;
 
       // If new entry, notify
