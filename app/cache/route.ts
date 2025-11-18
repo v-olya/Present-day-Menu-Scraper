@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const key = url + "_" + date;
   return withTimeout(
     (async (): Promise<NextResponse> => {
-      const row = await db.getAsync(
+      const row = await db.get(
         "SELECT response FROM cache WHERE key = ?",
         key
       );
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   return withTimeout(
     (async (): Promise<NextResponse> => {
       // Check if key exists
-      const existing = await db.getAsync(
+      const existing = await db.get(
         "SELECT 1 FROM cache WHERE key = ?",
         key
       );
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert or replace
-      await db.runAsync(
+      await db.run(
         "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
         key,
         JSON.stringify(response)

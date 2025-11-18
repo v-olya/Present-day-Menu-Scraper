@@ -104,7 +104,7 @@ export async function POST(req: Request) {
         .createHash("sha256")
         .update(scraped.text)
         .digest("hex");
-      await db.runAsync(
+      await db.run(
         "INSERT OR REPLACE INTO polling (url, last_hash) VALUES (?, ?)",
         url,
         hash
