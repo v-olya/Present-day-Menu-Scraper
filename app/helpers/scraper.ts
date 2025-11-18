@@ -197,7 +197,7 @@ export async function getMainSection(url: string): Promise<ParseResult> {
 
       for (let i = 0; i < count; i++) {
         const a = anchors.nth(i);
-        const aText = (await a.textContent())?.trim() ?? "";
+        const aText = (await a.innerText())?.trim() ?? "";
         const img = a.locator("img, picture img").first();
         const imgCount = await img.count();
         const alt = imgCount
@@ -224,6 +224,11 @@ export async function getMainSection(url: string): Promise<ParseResult> {
       restaurant = matched ?? firstAnchorImgAlt ?? firstAnchorText ?? "";
     } catch {
       restaurant = "";
+    }
+    // Remove variations of "Logo" from the detected restaurant name
+    restaurant = restaurant.replace(/\blogo\b/gi, "").trim();
+    if (restaurant) {
+      restaurant = restaurant.charAt(0).toUpperCase() + restaurant.slice(1);
     }
 
     // Get base64 thumbnail for the chosen image (if any)
