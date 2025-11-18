@@ -74,9 +74,8 @@ export default function Home() {
       });
       if (cacheRes.ok) {
         const cacheData = await cacheRes.json();
-        if (cacheData.response) {
-          const cachedResponse = cacheData.response?.menu ?? cacheData.response;
-          setFetchedData(cachedResponse);
+        if (cacheData.menu) {
+          setFetchedData({ menu: cacheData.menu });
           setError(null);
           setIsLoading(false);
           return;
@@ -106,7 +105,7 @@ export default function Home() {
         await fetch("/cache", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, response: resData.menu ?? resData }),
+          body: JSON.stringify({ url, response: resData.menu }),
         });
         // Avoid disrupting the UI flow
       } catch (cacheError) {
