@@ -64,12 +64,12 @@ Pokud nabídku jídel v textu nenajdeš, ale je k dispozici \`image_url\`, zprac
 Jestliže není \`image_url\` k dispozici nebo OCR selže, vrať negativní výstup (viz Pokyny pro generování výstupu). 
 Pokud OCR uspěje, připoj detekovaný text k původnímu vstupu a pokračuj s kombinovaným textem dle dalších Pokynů.
 
-### Pokyny pro parsování dat:
+### Pokyny pro detekci dat:
 - Pokud v datu chybí rok, předpokládej aktuální rok.
 - Rozpoznej formáty: \`DD.MM.\`, \`DD. MM.\`, \`D.M.\` apod.
 - Rozpoznej intervaly, např.: \`1.–20. 11.\` → rozsah od 1. listopadu do 20. listopadu.
-- Pokud je datum v textu uvedeno za nabídkou, nikoli před ní, postupuj tak, jako by tam nebylo.
 - Pokud je menu „Stálé“, znamená to, že platí každý den, kdy je podnik otevřený.
+- Pokud je datum uvedeno blíže ke konci textu, nikoliv na začátku, postupuj tak, jako by tam nebylo.
 
 ### Pokyny pro detekci menu v textu:
 - V každém případě, kdy detekce selže, musí tvůj výstup obsahovat důvod selhání (\`reason\`).
