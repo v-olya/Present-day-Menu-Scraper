@@ -6,16 +6,32 @@ import { AiError } from "../helpers/errors";
 import { db } from "../../db/db_manager";
 import crypto from "crypto";
 import { normalizeUrl } from "../helpers/functions";
+import { enforceRateLimit, getClientIp } from "../helpers/security";
 
 export async function POST(req: Request) {
   try {
+    // Rate-limit per client IP
+    const ip = getClientIp(req.headers);
+    try {
+      enforceRateLimit(ip);
+    } catch {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    // Parse request body to extract `url` (do this after rate-limiting)
     const body = await req.json();
     const url = body?.url;
 
-    // Try a lightweight fetch to just check if the URL responds OK
+    // Don't re-validate the URL, rely on catch (FE validates it's an URL)
+    // CURL /menu route calls remain unvalidated (and non-authorized yet),
+    // but validation is kind of useless here while any "normal" URL can hijack Playwright.
+    // So, the scrapping needs to be sandboxed properly instead.
     let headRes: Response;
     try {
-      // Don't re-validate the URL (FE does), rely on catch
+      // Try a lightweight fetch to just check if the URL responds OK
       headRes = await fetch(url, { method: "GET", signal: req.signal });
     } catch (err) {
       console.error("Fetch error:", err);
