@@ -4,6 +4,7 @@ import path from "path";
 import cron from "node-cron";
 import { getMainSection } from "../app/helpers/scraper";
 import { extractMenuFromHTML } from "../app/helpers/openai";
+import { normalizeUrl } from "../app/helpers/functions";
 
 process.env.TZ = "UTC";
 
@@ -68,7 +69,30 @@ cron.schedule("0 * * * *", async () => {
       const url = row.url as string;
       const lastHash = row.last_hash as string;
       try {
-        const scraped = await getMainSection(url);
+        // Normalize once and reuse (ensure normalized URLs are used for DB keys)
+        const normalized = normalizeUrl(url);
+
+        try {
+          const date = new Date().toISOString().split("T")[0];
+          const key = normalized + "_" + date;
+          const cached = await db.get(
+            "SELECT response FROM cache WHERE key = ?",
+            key
+          );
+          // If there's already a cache entry for this URL, remove from polling
+          // (Relevant for URLs added to cache AFTER the SELECT was loaded)
+          if (cached) {
+            console.log(
+              `Cache exists for ${normalized}, removing from polling`
+            );
+            await db.run("DELETE FROM polling WHERE url = ?", normalized);
+            continue;
+          }
+        } catch (e) {
+          console.warn("Failed to check cache before polling, continuing:", e);
+        }
+
+        const scraped = await getMainSection(normalized);
         const crypto = await import("crypto");
         const newHash = crypto.default
           .createHash("sha256")
@@ -84,15 +108,11 @@ cron.schedule("0 * * * *", async () => {
           );
           const menu = parsed ? JSON.parse(parsed) : null;
           if (menu?.menu_items?.length) {
-            // Save to cache
             const date = new Date().toISOString().split("T")[0];
-            // normalize URL for stable cache key
-            const { normalizeUrl } = await import("../app/helpers/functions");
-            const normalized = normalizeUrl(url);
             const key = normalized + "_" + date;
             const response = {
               ...menu,
-              source_url: url,
+              source_url: normalized,
               image_base64: scraped.image_base64,
             };
             await db.run(
@@ -101,18 +121,13 @@ cron.schedule("0 * * * *", async () => {
               JSON.stringify(response)
             );
             notifyOnNewMenu(menu.restaurant_name || scraped.restaurant);
-            // Remove from polling (match both normalized and original form)
-            await db.run(
-              "DELETE FROM polling WHERE url = ? OR url = ?",
-              normalized,
-              url
-            );
+            console.log(`Menu found for ${normalized}, removing from polling`);
+            await db.run("DELETE FROM polling WHERE url = ?", normalized);
           } else {
-            // Update hash
             await db.run(
               "UPDATE polling SET last_hash = ? WHERE url = ?",
               newHash,
-              url
+              normalized
             );
           }
         } else {
