@@ -12,31 +12,31 @@
     <script>
       initSqlJs({
         locateFile: (file) => `https://sql.js.org/dist/${file}`,
-      }).then(function (SQL) {
+      }).then((SQL) => {
         fetch("/api/db-viewer/db")
           .then((response) => response.arrayBuffer())
-          .then(function (buffer) {
-            var db = new SQL.Database(new Uint8Array(buffer));
-            var tables = db.exec(
+          .then((buffer) => {
+            const db = new SQL.Database(new Uint8Array(buffer));
+            const tables = db.exec(
               "SELECT name FROM sqlite_master WHERE type='table'"
             );
-            var output = document.getElementById("output");
-            tables[0].values.forEach(function (table) {
-              var tableName = table[0];
-              var result = db.exec("SELECT * FROM " + tableName);
-              output.innerHTML += "<h2>" + tableName + "</h2>";
+            const output = document.getElementById("output");
+            tables[0].values.forEach((table) => {
+              const tableName = table[0];
+              const result = db.exec(`SELECT * FROM ${tableName}`);
+              output.innerHTML += `<h2>${tableName}</h2>`;
               if (result.length > 0) {
-                var columns = result[0].columns;
-                var values = result[0].values;
-                var tableHtml = '<table border="1"><thead><tr>';
-                columns.forEach(function (col) {
-                  tableHtml += "<th>" + col + "</th>";
+                const columns = result[0].columns;
+                const values = result[0].values;
+                let tableHtml = '<table border="1"><thead><tr>';
+                columns.forEach((col) => {
+                  tableHtml += `<th>${col}</th>`;
                 });
                 tableHtml += "</tr></thead><tbody>";
-                values.forEach(function (row) {
+                values.forEach((row) => {
                   tableHtml += "<tr>";
-                  row.forEach(function (cell) {
-                    tableHtml += "<td>" + cell + "</td>";
+                  row.forEach((cell) => {
+                    tableHtml += `<td>${cell}</td>`;
                   });
                   tableHtml += "</tr>";
                 });
@@ -44,6 +44,9 @@
                 output.innerHTML += tableHtml;
               }
             });
+          })
+          .catch((err) => {
+            document.getElementById("output").innerText = err.message;
           });
       });
     </script>

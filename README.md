@@ -38,11 +38,4 @@ If you want, you can change this project to remove the helper and use a direct i
 - In `const.ts`, there are restaurantURLs with different menu URLs to try (and the reasons why to try).
 - Initial page scrapping is slowed down by converting the largest image found to base64 format in order to just display it in the UI. This is not necessary and can be avoided.
 - On FE, the only indicator that data is being read from the cache is the absence of <RawDetails> with _Playwright output_, _LLM output_, and _model rationale_.
-
-**What to consider next**
-
-- Multi-language support
-- Menu hubs support (detecting multiple menus at once)
-- Let the user submit just the restaurant's homepage. Finding the menu page should be delegated to AI, because just with a headless browser, both "homepage's links evaluation" and "site: inurl: intitle: search" do not seem like reliable solutions.
-- Maybe replace SQLite with another DB solution if the scraper won't be just one-user app.
-- async sqlite+sqlite3 Vs. node:sqlite (no extra dependencies, but sync)+child processes - ?
+- Sorry for saying the obvious, but keep in mind that the `/api/db-viewer/db` route **exposes the entire database to unauthenticated users**. It's just a handy tool for viewing data we have in `cache` and `polling` tables. It's dev only.
