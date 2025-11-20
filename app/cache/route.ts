@@ -67,29 +67,22 @@ export async function POST(request: NextRequest) {
 
   return withTimeout(
     (async (): Promise<NextResponse> => {
-      // Check if key exists
-      const existing = await db.get("SELECT 1 FROM cache WHERE key = ?", key);
-      const isNew = !existing;
+      await db.run(
+        "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
+        key,
+        JSON.stringify(response)
+      );
+      // After `INSERT OR REPLACE` we read changes (per connection): insert => 1, replace => 2
+      const changesRow = await db.get("SELECT changes() AS changes");
+      const changes =
+        typeof changesRow === "object" && "changes" in changesRow
+          ? Number((changesRow as { changes: unknown }).changes) || 0
+          : 0;
+      const isNew = changes === 1;
 
-      // If new entry, notify
       if (isNew) {
         const restaurantName = response.restaurant_name || "Unknown";
         notifyOnNewMenu(restaurantName);
-      }
-
-      // Insert or replace
-      if (existing) {
-        await db.run(
-          "UPDATE cache SET response = ? WHERE key = ?",
-          JSON.stringify(response),
-          key
-        );
-      } else {
-        await db.run(
-          "INSERT INTO cache (key, response) VALUES (?, ?)",
-          key,
-          JSON.stringify(response)
-        );
       }
       // Remove from polling since menu is now cached manually
       await db.run("DELETE FROM polling WHERE url = ?", normalizeUrl(url));

@@ -85,7 +85,8 @@ describe("/cache API Tests", () => {
   });
 
   it("POST stores data in cache", async () => {
-    (dbManager.db as unknown as MockedDb).get.mockResolvedValue(undefined); // No existing
+    // On insert/update we get `changes()` to determine if it was a new entry
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({ changes: 1 }); // inserted
     (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
     const req = new NextRequest("http://localhost/cache", {
@@ -113,7 +114,7 @@ describe("/cache API Tests", () => {
     expect(result.success).toBe(true);
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
       2,
-      "INSERT INTO cache (key, response) VALUES (?, ?)",
+      "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
       `https://example.com_${getTodayDate()}`,
       JSON.stringify({
         restaurant_name: "Fancy Cafe",
@@ -174,21 +175,8 @@ describe("/cache API Tests", () => {
   });
 
   it("POST does not notify when cache entry already exists", async () => {
-    // Simulate existing cache entry
-    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({
-      response: JSON.stringify({
-        restaurant_name: "Fancy Cafe",
-        menu_items: [
-          {
-            category: "soup",
-            name: "Soup",
-            price: 50,
-            allergens: [],
-            weight: "200g",
-          },
-        ],
-      }),
-    });
+    // Simulate existing cache entry (it would be changes=2 after REPLACE)
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({ changes: 2 });
     (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
     const req = new NextRequest("http://localhost/cache", {
@@ -217,7 +205,8 @@ describe("/cache API Tests", () => {
     expect(dbManager.notifyOnNewMenu).not.toHaveBeenCalled();
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
       2,
-      "UPDATE cache SET response = ? WHERE key = ?",
+      "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
+      `https://example.com_${getTodayDate()}`,
       JSON.stringify({
         restaurant_name: "Cafe",
         menu_items: [
@@ -229,8 +218,7 @@ describe("/cache API Tests", () => {
             weight: "200g",
           },
         ],
-      }),
-      `https://example.com_${getTodayDate()}`
+      })
     );
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
       3,
@@ -240,7 +228,7 @@ describe("/cache API Tests", () => {
   });
 
   it("POST notifies with provided restaurant_name when creating new entry", async () => {
-    (dbManager.db as unknown as MockedDb).get.mockResolvedValue(undefined); // No existing
+    (dbManager.db as unknown as MockedDb).get.mockResolvedValue({ changes: 1 }); // inserted
     (dbManager.db as unknown as MockedDb).run.mockResolvedValue(undefined);
 
     const req = new NextRequest("http://localhost/cache", {
@@ -268,7 +256,7 @@ describe("/cache API Tests", () => {
     expect(result.success).toBe(true);
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
       2,
-      "INSERT INTO cache (key, response) VALUES (?, ?)",
+      "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
       `https://example.com_${getTodayDate()}`,
       JSON.stringify({
         restaurant_name: "Fancy Cafe",
