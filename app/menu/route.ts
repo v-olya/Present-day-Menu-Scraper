@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     }
 
     if (menu) {
-      menu.source_url = url;
+      menu.source_url = normalizeUrl(url);
       if (scraped.image_base64) {
         menu.image_base64 = scraped.image_base64;
       }

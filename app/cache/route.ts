@@ -67,6 +67,8 @@ export async function POST(request: NextRequest) {
 
   return withTimeout(
     (async (): Promise<NextResponse> => {
+      // Ensure store normalized URLs only
+      response.source_url = normalizeUrl(url);
       await db.run(
         "INSERT OR REPLACE INTO cache (key, response) VALUES (?, ?)",
         key,

@@ -127,6 +127,7 @@ describe("/cache API Tests", () => {
             weight: "200g",
           },
         ],
+        source_url: "https://example.com",
       })
     );
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
@@ -218,6 +219,7 @@ describe("/cache API Tests", () => {
             weight: "200g",
           },
         ],
+        source_url: "https://example.com",
       })
     );
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
@@ -269,6 +271,7 @@ describe("/cache API Tests", () => {
             weight: "200g",
           },
         ],
+        source_url: "https://example.com",
       })
     );
     expect((dbManager.db as unknown as MockedDb).run).toHaveBeenNthCalledWith(
