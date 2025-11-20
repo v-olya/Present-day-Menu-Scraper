@@ -11,22 +11,25 @@ const MODEL_NAME = "gpt-4o-mini";
 const detectedMenuSchema = {
   type: "object",
   properties: {
-    restaurant_name: { type: "string" },
-    date: { type: "string" },
-    reason: { type: ["string", "null"] },
+    restaurant_name: { type: "string", maxLength: 100 },
+    date: { type: "string", maxLength: 50 },
+    reason: { type: ["string", "null"], maxLength: 200 },
     menu_items: {
       type: "array",
+      minItems: 0,
+      maxItems: 200,
       items: {
         type: "object",
         properties: {
-          category: { type: "string" },
-          name: { type: "string" },
-          price: { type: "number" },
+          category: { type: "string", maxLength: 100 },
+          name: { type: "string", maxLength: 200 },
+          price: { type: ["number", "null"] },
           allergens: {
             type: "array",
-            items: { type: "string" },
+            maxItems: 20,
+            items: { type: "string", maxLength: 50 },
           },
-          weight: { type: "string" },
+          weight: { type: ["string", "null"], maxLength: 50 },
         },
         required: ["category", "name", "price", "allergens", "weight"],
         additionalProperties: false,
@@ -36,7 +39,8 @@ const detectedMenuSchema = {
       type: "array",
       description:
         "A short, ordered list of reasoning steps used to extract the menu",
-      items: { type: "string" },
+      items: { type: "string", maxLength: 200 },
+      maxItems: 50,
     },
     menu_type: {
       type: "string",
