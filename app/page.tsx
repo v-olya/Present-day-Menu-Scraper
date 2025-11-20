@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, FormEvent, useRef, useEffect } from "react";
-import Image from "next/image";
 import {
   type MenuItem,
   type RestaurantMenu,
@@ -9,9 +8,11 @@ import {
 } from "./helpers/types";
 import ErrorMessage from "./components/ErrorMessage";
 import RawDetails from "./components/RawDetails";
-import { getAllergenDescriptions } from "./helpers/allergens";
-import { formatDate } from "./helpers/functions";
-import { ERROR_MESSAGES, fakeMenu, getMenuTypeText } from "./helpers/const";
+import { CategoryCard } from "./components/Card";
+import { AllergenFilter } from "./components/AllergenFilter";
+import { RestaurantHeader } from "./components/RestaurantHeader";
+import { formatDate, getPrettyParsed, groupDishes } from "./helpers/functions";
+import { ERROR_MESSAGES, fakeMenu } from "./helpers/const";
 import { handwritten } from "./fonts";
 
 export default function Home() {
@@ -19,7 +20,7 @@ export default function Home() {
   const data: RestaurantMenu = {
     restaurant_name: "Restaurace Example",
     source_url: "http://example.com/menu",
-    date: "2025-11-18",
+    date: "2025-11-20",
     menu_items: fakeMenu,
     menu_type: "launch",
     image_base64:
@@ -42,6 +43,7 @@ export default function Home() {
       : null;
   });
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+
   const [fetchedData, setFetchedData] = useState<{
     parsed?: string | null;
     menu: DetectedMenu | null;
@@ -120,185 +122,53 @@ export default function Home() {
     }
   };
 
-  // Group menu items by dish category
-  const groupDishes = (menu_items: MenuItem[]) =>
-    menu_items.reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = [];
-      }
-      acc[item.category].push(item);
-      return acc;
-    }, {} as Record<string, MenuItem[]>);
-
-  const current = fetchedData?.menu ?? data;
+  const currentMenu = fetchedData?.menu ?? data;
 
   const allAllergens = Array.from(
     new Set(
-      current.menu_items.flatMap((item: MenuItem) => item.allergens || [])
+      currentMenu.menu_items.flatMap((item: MenuItem) => item.allergens || [])
     )
   ).sort();
-  const filteredItems = current.menu_items.filter(
+  const filteredItems = currentMenu.menu_items.filter(
     (item: MenuItem) =>
       !selectedAllergens.some((allergen) =>
         item.allergens?.some((a) => a.toLowerCase() === allergen.toLowerCase())
       )
   );
 
-  const menuContent = Object.entries(groupDishes(filteredItems)).map(
-    ([category, items]) => (
-      <div key={category} className="category-card mb-6">
-        <div className="max-h-screen md:max-h-[440px] overflow-y-auto">
-          <h3 className="text-xl mb-2 capitalize font-bold">{category}</h3>
-          <ul className="space-y-2">
-            {items.map((item, index) => (
-              <li key={index}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p
-                      className={`${handwritten.className} text-2xl font-bold mb-2`}
-                    >
-                      {item.name}
-                    </p>
-                    {item.allergens && item.allergens.length > 0 && (
-                      <p className="text-sm text-emerald-800">
-                        Alergeny:{" "}
-                        {getAllergenDescriptions(item.allergens).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right mr-6">
-                    <p className="font-medium">{item.price ?? ""} CZK</p>
-                    {item.weight && (
-                      <p className="text-sm mt-1">Porce: {item.weight ?? ""}</p>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    )
-  );
-
-  const imageSrc = current.image_base64
-    ? current.image_base64.startsWith("data:")
-      ? current.image_base64
-      : `data:image/png;base64,${current.image_base64}`
+  const imageSrc = currentMenu.image_base64
+    ? currentMenu.image_base64.startsWith("data:")
+      ? currentMenu.image_base64
+      : `data:image/png;base64,${currentMenu.image_base64}`
     : "/favicon.png";
 
-  const hasImage = !!current.image_base64?.length;
-
-  const imageTitleJSX = (
-    <div className="w-full flex justify-center my-6">
-      <div className="flex items-center">
-        <div className="w-24 h-24 shrink-0 bg-gray-100 rounded-md overflow-hidden relative">
-          {hasImage && (
-            <div
-              className="absolute inset-0.5"
-              style={{
-                backgroundImage: `url(${imageSrc})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                filter: "blur(6px)",
-                transform: "scale(1.06)",
-              }}
-            />
-          )}
-          <div className="absolute inset-1 rounded-md">
-            <Image
-              src={imageSrc}
-              alt={current.restaurant_name}
-              width={96}
-              height={96}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-        <h2 className="text-2xl font-semibold text-teal-800 ms-4">
-          {current.restaurant_name} &nbsp;&#10087;&nbsp;{" "}
-          {getMenuTypeText(current.menu_type || "daily")}
-        </h2>
-      </div>
-    </div>
-  );
-
-  const filterJSX = allAllergens.length > 0 && (
-    <div className="mb-6 text-sm">
-      <div className="flex flex-wrap justify-center items-baseline gap-x-6 gap-y-4 mb-2">
-        <span>Odfiltruj alergeny:</span>
-        {allAllergens.map((code) => (
-          <label key={code} className="flex items-center">
-            <input
-              type="checkbox"
-              checked={selectedAllergens.includes(code)}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedAllergens([...selectedAllergens, code]);
-                } else {
-                  setSelectedAllergens(
-                    selectedAllergens.filter((a) => a !== code)
-                  );
-                }
-              }}
-              className="mr-2"
-            />
-            {getAllergenDescriptions([code])[0]}
-          </label>
-        ))}
-        <button
-          type="button"
-          onClick={() => setSelectedAllergens([])}
-          className="py-1.5 px-3 btn btn-outline font-medium"
-        >
-          Zrušit vše
-        </button>
-      </div>
-    </div>
-  );
-
-  // Show raw scraped page text
-  const rawScrapedJSX = fetchedData?.scraped?.text ? (
-    <RawDetails title="Playwright output" content={fetchedData.scraped.text} />
-  ) : null;
-
-  // Parse and pretty-print the raw LLM output
-  let rawParsed: string | null = null;
-  let prettyParsed: string | null = null;
-  let parsedJson: Record<string, unknown> | null = null;
+  // Get JSON parsed model output and extract rationale from it (to show in RawDetails)
+  let modelOutput: { rationale: string[] } | null = null;
+  let rationale: string[] = [];
   if (fetchedData?.parsed) {
-    rawParsed = fetchedData.parsed as string;
     try {
-      // Exclude the rationale from the LLM output
-      parsedJson = JSON.parse(rawParsed) as Record<string, unknown>;
-      const withoutRationale = { ...parsedJson };
-      delete (withoutRationale as Record<string, unknown>).rationale;
-      prettyParsed = JSON.stringify(withoutRationale, null, 2);
-    } catch {
-      prettyParsed = rawParsed;
-    }
+      modelOutput = JSON.parse(fetchedData.parsed);
+      rationale = modelOutput?.rationale || [];
+    } catch {}
   }
-  const rawParsedJSX = prettyParsed ? (
-    <RawDetails title="LLM output" content={prettyParsed} />
-  ) : null;
-
   // Render the model rationale as a numbered list
-  let rawRationaleJSX = null;
-  const rationale = parsedJson?.rationale;
+  let numberedRationale = "";
   if (Array.isArray(rationale) && rationale.length) {
-    const numbered = rationale
+    numberedRationale = rationale
       .map((step: unknown, idx: number) => `${idx + 1}. ${String(step)}`)
       .join("\n");
-    rawRationaleJSX = <RawDetails title="Model rationale" content={numbered} />;
   }
-
   return (
     <div className="contentful mx-auto p-6">
       <h1 className="text-3xl mt-3 mb-5 font-semibold text-center">
         Aktuální nabídka na dnešek,
       </h1>
       <h2 className={`text-3xl text-center ${handwritten.className}`}>
-        {formatDate(current.date)}
+        {formatDate(
+          !isNaN(new Date(currentMenu.date).getTime())
+            ? currentMenu.date
+            : new Date().toISOString()
+        )}
       </h2>
       <form
         className="flex flex-col sm:flex-row gap-4 my-8 max-w-xl mx-auto"
@@ -326,31 +196,44 @@ export default function Home() {
         </h2>
       ) : (
         <div className="results">
-          {fetchedData ? (
+          {error && <ErrorMessage message={error} />}
+          {!error && (
             <>
-              {imageTitleJSX}
-              {/* The reason of failed detection */}
+              <RestaurantHeader
+                imageSrc={imageSrc}
+                restaurantName={currentMenu.restaurant_name}
+                menuType={currentMenu.menu_type || "daily"}
+              />
               {typeof fetchedData?.menu?.reason === "string" &&
                 !fetchedData.menu.menu_items?.length && (
                   <ErrorMessage message={fetchedData.menu.reason} />
                 )}
-              {filterJSX}
-              {menuContent}
-              {rawParsedJSX}
-              {rawRationaleJSX}
-              {rawScrapedJSX}
-            </>
-          ) : url ? (
-            error ? (
-              <ErrorMessage message={error} />
-            ) : null
-          ) : (
-            <>
-              {imageTitleJSX}
-              {filterJSX}
-              {error ? <ErrorMessage message={error} /> : menuContent}
-              {rawParsedJSX}
-              {rawRationaleJSX}
+              <AllergenFilter
+                allAllergens={allAllergens}
+                selectedAllergens={selectedAllergens}
+                setSelectedAllergens={setSelectedAllergens}
+              />
+              {Object.entries(groupDishes(filteredItems)).map(
+                ([category, items]) => (
+                  <CategoryCard
+                    key={category}
+                    category={category}
+                    items={items}
+                  />
+                )
+              )}
+              <RawDetails
+                title="LLM output"
+                content={getPrettyParsed(
+                  fetchedData?.parsed ?? "",
+                  modelOutput
+                )}
+              />
+              <RawDetails
+                title="Playwright output"
+                content={fetchedData?.scraped?.text}
+              />
+              <RawDetails title="Model rationale" content={numberedRationale} />
             </>
           )}
         </div>

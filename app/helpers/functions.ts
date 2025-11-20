@@ -1,3 +1,5 @@
+import { MenuItem } from "./types";
+
 export const isDateToday = (date: string): boolean => {
   const d = new Date(date);
   const now = new Date();
@@ -57,3 +59,29 @@ export async function withTimeout<T>(
 
   return Promise.race([p, timeoutPromise]) as Promise<T>;
 }
+
+export const getPrettyParsed = (
+  raw: string,
+  json: Record<string, unknown> | null
+): string => {
+  if (!raw) return "";
+  let prettyParsed: string | null = raw;
+  const parsedJson = json;
+  // Exclude the rationale from the LLM output
+  const withoutRationale = { ...parsedJson };
+  delete (withoutRationale as Record<string, unknown>).rationale;
+  try {
+    prettyParsed = JSON.stringify(withoutRationale, null, 2);
+  } catch {}
+  return prettyParsed;
+};
+
+// Group menu items by dish category
+export const groupDishes = (menu_items: MenuItem[]) =>
+  menu_items.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, MenuItem[]>);
