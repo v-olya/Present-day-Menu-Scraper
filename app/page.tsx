@@ -70,22 +70,8 @@ export default function Home() {
     abortControllerRef.current = controller;
 
     try {
-      // First, try to get from cache
-      const cacheRes = await fetch(`/cache?url=${encodeURIComponent(url)}`, {
-        signal: controller.signal,
-      });
-      if (cacheRes.ok) {
-        const cacheData = await cacheRes.json();
-        if (cacheData.menu) {
-          setFetchedData({ menu: cacheData.menu });
-          setError(null);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // If not in cache, fetch from /menu
-      const res = await fetch("/menu", {
+      // Single proxy call: the server will check /cache first, then call /menu
+      const res = await fetch("/cache-scraper-proxy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
@@ -99,20 +85,9 @@ export default function Home() {
         setFetchedData(null);
         return;
       }
+      // resData == `{ menu }` (from cache) || `{ parsed, menu, scraped }`
       setFetchedData(resData);
       setError(null);
-
-      // Cache the fetched data
-      try {
-        await fetch("/cache", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, response: resData.menu }),
-        });
-        // Avoid disrupting the UI flow
-      } catch (cacheError) {
-        console.warn("Failed to cache data:", cacheError);
-      }
     } catch (error) {
       console.error("Fetch error:", error);
       setError(ERROR_MESSAGES.UNREACHABLE_URL);
