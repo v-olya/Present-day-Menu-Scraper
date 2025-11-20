@@ -20,7 +20,7 @@ export default function Home() {
   const data: RestaurantMenu = {
     restaurant_name: "Restaurace Example",
     source_url: "http://example.com/menu",
-    date: "2025-11-20",
+    date: "2025-11-21",
     menu_items: fakeMenu,
     menu_type: "launch",
     image_base64:
