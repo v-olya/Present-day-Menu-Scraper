@@ -171,6 +171,30 @@ export const getPrettyParsed = (
   return prettyParsed;
 };
 
+export function isImageUrlSafe(src: string | null | undefined): boolean {
+  if (!src) return false;
+  // data:images (data:image/png;base64,....)
+  if (src.startsWith("data:")) {
+    return /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/.test(src);
+  }
+  try {
+    const p = new URL(src);
+    return p.protocol === "http:" || p.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function isBase64ImageSafe(
+  b64: string | null | undefined,
+  maxBytes = 1_000_000
+): boolean {
+  if (!b64) return false;
+  if (!/^[A-Za-z0-9+/=]+$/.test(b64)) return false;
+  const bytes = Math.ceil(b64.replace(/\s+/g, "").length);
+  return bytes <= maxBytes;
+}
+
 // Group menu items by dish category
 export const groupDishes = (menu_items: MenuItem[]) =>
   menu_items.reduce((acc, item) => {

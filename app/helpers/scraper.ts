@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import type { Browser, Page, APIResponse, BrowserContext } from "playwright";
 import { ParseResult } from "./types";
-import { withTimeout } from "./functions";
+import { withTimeout, isImageUrlSafe, isBase64ImageSafe } from "./functions";
 
 const restaurantKeywords = ["restaurace", "restaurant", "bistro", "pizzeria"];
 
@@ -235,24 +235,46 @@ export async function getMainSection(url: string): Promise<ParseResult> {
     let image_base64: string | null = null;
     if (largestImageSrc) {
       try {
-        if (largestImageSrc.startsWith("data:")) {
+        // Validate image src: allow data:image/*;base64 and http(s) only
+        if (!isImageUrlSafe(largestImageSrc)) {
+          largestImageSrc = null;
+        } else if (largestImageSrc.startsWith("data:")) {
           const comma = largestImageSrc.indexOf(",");
-          image_base64 =
+          const raw =
             comma !== -1 ? largestImageSrc.slice(comma + 1) : largestImageSrc;
+          if (isBase64ImageSafe(raw)) {
+            image_base64 = raw;
+          } else {
+            // not base64 or too large
+            largestImageSrc = null;
+            image_base64 = null;
+          }
         } else {
           const resolved = new URL(largestImageSrc, url).toString();
-          const imgResp = await withTimeout(
-            page.request.get(resolved) as Promise<APIResponse>,
-            10000
-          );
-          if (imgResp.ok()) {
-            const body = await imgResp.body();
-            image_base64 = Buffer.from(body).toString("base64");
+          if (!isImageUrlSafe(resolved)) {
+            largestImageSrc = null;
+          } else {
+            const imgResp = await withTimeout(
+              page.request.get(resolved) as Promise<APIResponse>,
+              10000
+            );
+            if (imgResp.ok()) {
+              const body = await imgResp.body();
+              const b64 = Buffer.from(body).toString("base64");
+              if (isBase64ImageSafe(b64)) {
+                image_base64 = b64;
+              } else {
+                // too large or invalid
+                image_base64 = null;
+                largestImageSrc = null;
+              }
+            }
           }
         }
       } catch (err) {
         console.debug("image fetch failed", stringifyErr(err));
         image_base64 = null;
+        largestImageSrc = null;
       }
     }
 
