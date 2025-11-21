@@ -14,7 +14,18 @@
         locateFile: (file) => `https://sql.js.org/dist/${file}`,
       }).then((SQL) => {
         fetch("/api/db-viewer/db")
-          .then((response) => response.arrayBuffer())
+          .then(async (response) => {
+            if (!response.ok) {
+              const status = response.status;
+              const text = await response.text().catch(() => null);
+              const safeMsg =
+                `Failed to download database (HTTP ${status}).` +
+                (text ? ` Server message: ${text}` : "");
+              document.getElementById("output").innerText = safeMsg;
+              throw new Error(safeMsg);
+            }
+            return response.arrayBuffer();
+          })
           .then((buffer) => {
             const db = new SQL.Database(new Uint8Array(buffer));
             const tables = db.exec(
@@ -46,7 +57,8 @@
             });
           })
           .catch((err) => {
-            document.getElementById("output").innerText = err.message;
+            // Error already shown above; avoid leaking any internal variable names.
+            console.error(err);
           });
       });
     </script>

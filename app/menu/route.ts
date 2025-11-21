@@ -10,6 +10,18 @@ import { enforceRateLimit, getClientIp } from "../helpers/security";
 
 export async function POST(req: Request) {
   try {
+    // Internal-only access: require a server-side secret header.
+    const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET ?? "";
+    const providedSecret = (
+      req.headers.get("X-Internal-Secret") ?? ""
+    ).toString();
+    if (!INTERNAL_SECRET || providedSecret !== INTERNAL_SECRET) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Rate-limit per client IP
     const ip = getClientIp(req.headers);
     try {

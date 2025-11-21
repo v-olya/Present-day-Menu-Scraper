@@ -9,6 +9,7 @@ How it works:
 - Cache & polling: `cache/db_manager.ts` stores parsed responses in a SQLite DB (`db/responses.db`), schedules hourly polling for registered URLs, computes content hashes to detect changes, and pushes new menus into the cache. A midnight cron job removes stale entries.
 - `app/menu/route.ts` exposes a POST endpoint that accepts a `url`, runs scraping + LLM parsing, and returns parsed results (or starts polling if no menu detected). The LLM is expected to return strictly structured JSON; `ajv` validation rejects deviating outputs and surfaces an error.
 - `app/cache/route.ts` provides GET/POST helpers to retrieve or insert cached responses. Polling is conservative: when parsing fails, the URL is inserted into a `polling` table and rechecked hourly; new menus trigger notifications and insertion into the `cache` table.
+- `app/cache-scraper-proxy/route.ts` implements a proxy that first checks the local cache for an existing parsed menu for a given `url`. If a cached menu is found it returns that immediately. If not, it forwards the request to the heavy `POST /menu` scraper-parsing route, returns the scraper's result to the client, and stores it in the cache for subsequent responses. This proxy is useful for clients that want a single endpoint to read-from-cache-or-scrape-with-caching without calling `/cache` and `/menu` separately.
 - Notifications: When a new menu is detected, the code post a webhook to `DISCORD_WEBHOOK_URL` (if set).
 
 ### Key environment variables
@@ -38,4 +39,4 @@ If you want, you can change this project to remove the helper and use a direct i
 - In `const.ts`, there are restaurantURLs with different menu URLs to try (and the reasons why to try).
 - Initial page scrapping is slowed down by converting the largest image found to base64 format in order to just display it in the UI. This is not necessary and can be avoided.
 - On FE, the only indicator that data is being read from the cache is the absence of <RawDetails> with _Playwright output_, _LLM output_, and _model rationale_.
-- Sorry for saying the obvious, but keep in mind that the `/api/db-viewer/db` route **exposes the entire database to unauthenticated users**. It's just a handy tool for viewing data we have in `cache` and `polling` tables. It's dev only.
+- Sorry for saying the obvious, but keep in mind that the `/api/db-viewer/db` route **exposes the entire database to unauthenticated users**. It's just a handy tool for viewing data we have in `cache` and `polling` tables. It's dev only

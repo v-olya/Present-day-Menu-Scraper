@@ -37,13 +37,16 @@ export async function POST(req: Request) {
       console.warn("Proxy: cache check failed", err);
     }
 
-    // 2) If not found in cache, call the heavy scraper route
+    // 2) If not found in cache, call the heavy scraper route.
     const menuRes = await retryFetch(`${origin}/menu`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Internal-Secret": process.env.INTERNAL_API_SECRET ?? "",
+      },
       body: JSON.stringify({ url }),
       signal: req.signal,
-    });
+    }); // (include the internal secret header so route can reject external calls)
 
     const menuJson = await menuRes.json().catch(() => null);
 

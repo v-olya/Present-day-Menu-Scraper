@@ -43,6 +43,9 @@ function makeReq(url = "https://example.com") {
   return new NextRequest("http://localhost/menu", {
     method: "POST",
     body: JSON.stringify({ url }),
+    headers: {
+      "X-Internal-Secret": process.env.INTERNAL_API_SECRET ?? "testsecret",
+    },
   });
 }
 
@@ -84,6 +87,9 @@ function mockDbRejectOnce(err: unknown = new Error("DB ERROR")) {
 describe("/menu POST Integration Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Ensure the route's internal secret is set for tests
+    process.env.INTERNAL_API_SECRET = "testsecret";
 
     // Reset db mock to success by default
     mockDbResolve(undefined);

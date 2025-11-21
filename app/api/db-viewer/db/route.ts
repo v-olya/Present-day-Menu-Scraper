@@ -2,6 +2,11 @@ import fs from "fs";
 import path from "path";
 
 export async function GET() {
+  // Serve DB only in development/test to avoid exposing it in production.
+  if (process.env.NODE_ENV === "production") {
+    return new Response("Not Found", { status: 404 });
+  }
+
   const dbPath = path.join(process.cwd(), "db", "responses.db");
 
   try {
