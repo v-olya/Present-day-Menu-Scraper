@@ -15,6 +15,7 @@ How it works:
 ### Key environment variables
 
 - `OPENAI_API_KEY` — required for LLM parsing.
+- `INTERNAL_API_SECRET` — required. The heavy scraper route `POST /menu` requires requests to include the header `x-internal-secret` with this exact value. This protects the Playwright-based scraper from public access.
 - `DISCORD_WEBHOOK_URL` — optional; used to notify on new menus.
 - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` — optional; `1` to skip downloading browsers after `npm install`.
 - `PLAYWRIGHT_BROWSERS` — optional; comma-separated list to control which browsers to install via the helper script.
@@ -39,4 +40,4 @@ If you want, you can change this project to remove the helper and use a direct i
 - In `const.ts`, there are restaurantURLs with different menu URLs to try (and the reasons why to try).
 - Initial page scrapping is slowed down by converting the largest image found to base64 format in order to just display it in the UI. This is not necessary and can be avoided.
 - On FE, the only indicator that data is being read from the cache is the absence of <RawDetails> with _Playwright output_, _LLM output_, and _model rationale_.
-- Sorry for saying the obvious, but keep in mind that the `/api/db-viewer/db` route **exposes the entire database to unauthenticated users**. It's just a handy tool for viewing data we have in `cache` and `polling` tables. It's dev only
+- Besides the routes mentioned above, there is also the `/api/db-viewer/db` route. It's just a handy tool for viewing the data we already have in `cache` and `polling` tables. It's dev-only.
