@@ -25,10 +25,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const url = body?.url;
 
-    // Don't re-validate the URL, rely on catch (FE validates it's an URL)
-    // CURL /menu route calls remain unvalidated (and non-authorized yet),
-    // but validation is kind of useless here while any "normal" URL can hijack Playwright.
-    // So, the scrapping needs to be sandboxed properly instead.
+    // Don't re-validate the URL, rely on catch
+    // FE validates that it's an URL, but CURL /menu call remains unsafe (and non-authorized yet).
+    // BUT:
+    // We don't render non-encoded URLs and the DB queries are parametrized.
+    // The problem is that any "normal" (non-local, etc.) URL can hijack Playwright..
+    // So, the scraper needs to be sandboxed properly instead of validation.
+
     let headRes: Response;
     try {
       // Try a lightweight fetch to just check if the URL responds OK (with retries)
