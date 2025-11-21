@@ -3,7 +3,7 @@ import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import Ajv from "ajv";
 import { getSystemPrompt } from "./const";
 import { AiError } from "./errors";
-import { withTimeout } from "./functions";
+import { withTimeout, retryAsync, isNetworkError } from "./functions";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL_NAME = "gpt-4o-mini";
@@ -88,26 +88,29 @@ export async function extractMenuFromHTML(
     messages.push({ role: "user", content: htmlContent });
   }
 
-  const res = await withTimeout(
-    openai.chat.completions.create(
-      {
-        model: MODEL_NAME,
-        messages,
-        temperature: 0,
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "restaurant_menu",
-            schema: detectedMenuSchema,
-            strict: true,
+  const callOpenAI = () =>
+    withTimeout(
+      openai.chat.completions.create(
+        {
+          model: MODEL_NAME,
+          messages,
+          temperature: 0,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "restaurant_menu",
+              schema: detectedMenuSchema,
+              strict: true,
+            },
           },
         },
-      },
-      { signal }
-    ),
-    30000,
-    signal
-  );
+        { signal }
+      ),
+      30000,
+      signal
+    );
+
+  const res = await retryAsync(() => callOpenAI(), isNetworkError, signal);
 
   const content = (res as OpenAI.ChatCompletion).choices[0]?.message?.content;
   if (!content) return null;

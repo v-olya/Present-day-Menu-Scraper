@@ -1,3 +1,5 @@
+import { retryFetch } from "../helpers/functions";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -18,7 +20,7 @@ export async function POST(req: Request) {
     // 1) Try cache first
     try {
       const cacheUrl = `${origin}/cache?url=${encodeURIComponent(url)}`;
-      const cached = await fetch(cacheUrl, {
+      const cached = await retryFetch(cacheUrl, {
         method: "GET",
         signal: req.signal,
       });
@@ -36,8 +38,7 @@ export async function POST(req: Request) {
     }
 
     // 2) If not found in cache, call the heavy scraper route
-    const menuUrl = `${origin}/menu`;
-    const menuRes = await fetch(menuUrl, {
+    const menuRes = await retryFetch(`${origin}/menu`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
@@ -50,8 +51,7 @@ export async function POST(req: Request) {
     if (menuRes.ok && menuJson?.menu && menuJson.menu.menu_items.length) {
       (async () => {
         try {
-          const cachePostUrl = `${origin}/cache`;
-          await fetch(cachePostUrl, {
+          await retryFetch(`${origin}/cache`, {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ url, response: menuJson.menu }),

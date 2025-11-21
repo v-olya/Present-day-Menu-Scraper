@@ -5,7 +5,7 @@ import { DetectedMenu } from "../helpers/types";
 import { AiError } from "../helpers/errors";
 import { db } from "../../db/db_manager";
 import crypto from "crypto";
-import { normalizeUrl } from "../helpers/functions";
+import { normalizeUrl, retryFetch } from "../helpers/functions";
 import { enforceRateLimit, getClientIp } from "../helpers/security";
 
 export async function POST(req: Request) {
@@ -31,8 +31,8 @@ export async function POST(req: Request) {
     // So, the scrapping needs to be sandboxed properly instead.
     let headRes: Response;
     try {
-      // Try a lightweight fetch to just check if the URL responds OK
-      headRes = await fetch(url, { method: "GET", signal: req.signal });
+      // Try a lightweight fetch to just check if the URL responds OK (with retries)
+      headRes = await retryFetch(url, { method: "GET", signal: req.signal });
     } catch (err) {
       console.error("Fetch error:", err);
       return new Response(

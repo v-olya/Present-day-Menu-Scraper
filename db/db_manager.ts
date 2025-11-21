@@ -4,7 +4,7 @@ import path from "path";
 import cron from "node-cron";
 import { getMainSection } from "../app/helpers/scraper";
 import { extractMenuFromHTML } from "../app/helpers/openai";
-import { normalizeUrl } from "../app/helpers/functions";
+import { normalizeUrl, retryFetch } from "../app/helpers/functions";
 
 process.env.TZ = "UTC";
 
@@ -32,7 +32,7 @@ const notifyOnNewMenu = async (restaurantName: string) => {
     return;
   }
   try {
-    await fetch(webhookUrl, {
+    await retryFetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
