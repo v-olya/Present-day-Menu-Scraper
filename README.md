@@ -12,6 +12,9 @@ How it works:
 - `app/cache-scraper-proxy/route.ts` implements a proxy that first checks the local cache for an existing parsed menu for a given `url`. If a cached menu is found it returns that immediately. If not, it forwards the request to the heavy `POST /menu` scraper-parsing route, returns the scraper's result to the client, and stores it in the cache for subsequent responses. This proxy is useful for clients that want a single endpoint to read-from-cache-or-scrape-with-caching without calling `/cache` and `/menu` separately.
 - Notifications: When a new menu is detected, the code post a webhook to `DISCORD_WEBHOOK_URL` (if set).
 
+<p align="center"><img width="541" height="498" alt="image" src="https://github.com/user-attachments/assets/1097b1d8-f8ce-47d3-a9bb-a08a2e186e39" /></p>
+
+
 ### Key environment variables
 
 - `OPENAI_API_KEY` — required for LLM parsing.
