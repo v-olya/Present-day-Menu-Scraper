@@ -4,7 +4,7 @@ export const config = {
   matcher: ["/db-viewer.html"],
 };
 
-export function middleware() {
+export function proxy() {
   if (process.env.NODE_ENV === "production") {
     return new NextResponse(null, { status: 404 });
   }
